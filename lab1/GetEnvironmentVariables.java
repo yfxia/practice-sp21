@@ -6,7 +6,7 @@ public class GetEnvironmentVariables {
     public static String REPO_DIR = "/Users/sophiaxia/Documents/SophiaXia/Developer/Berkeley-CS61B/practice-sp21";
 
     //  Fill in the path to your snaps-sp21-s*** folder between the quotes
-    public static String SNAPS_DIR = "";
+    public static String SNAPS_DIR = "/Users/sophiaxia/Documents/SophiaXia/Developer/Berkeley-CS61B/practice-sp21";
 
     // Fill in the type of your shell by running 'echo $0` in your terminal. It should be zsh or bash.
     public static String SHELL = "/bin/zsh";
