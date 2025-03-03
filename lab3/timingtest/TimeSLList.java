@@ -30,10 +30,10 @@ public class TimeSLList {
             Ns.addLast(n);
             SLList tempS = new SLList<>();
             for (int i = 0; i < n; i++) {
-                tempS.addLast(i);
+                tempS.addLast("hello");
             }
             Stopwatch sw = new Stopwatch();
-            for (int i = 0; i < 1000; i++) {
+            for (int i = 0; i < 10000; i++) {
                 tempS.getLast();
                 opCount++;
             }
