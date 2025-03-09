@@ -10,12 +10,12 @@ public class ArrayDequeTest {
     public void addIsEmptySizeTest() {
         ArrayDeque<String> ad1 = new ArrayDeque<>();
         
-        assertTrue("A newly initialized ArrayDeque should be empty", ad1.isEMpty());
+        assertTrue("A newly initialized ArrayDeque should be Empty", ad1.isEmpty());
         ad1.addLast("a");
         ad1.addLast("b");
         
         assertEquals(2, ad1.size());
-        assertFalse("ad1 should contain 2 items", ad1.isEMpty());
+        assertFalse("ad1 should contain 2 items", ad1.isEmpty());
         
         ad1.addFirst("c");
         assertEquals(3, ad1.size());
@@ -28,15 +28,15 @@ public class ArrayDequeTest {
     public void addRemoveTest() {
         ArrayDeque<Integer> ad1 = new ArrayDeque<>();
         ad1.addFirst(10);
-        assertFalse("ad1 should contain 1 item", ad1.isEMpty());
+        assertFalse("ad1 should contain 1 item", ad1.isEmpty());
         ad1.removeFirst();
-        assertTrue("ad1 should be empty after removal", ad1.isEMpty());
+        assertTrue("ad1 should be Empty after removal", ad1.isEmpty());
 
         ArrayDeque<Integer> ad2 = new ArrayDeque<>();
         ad1.addLast(10);
-        assertFalse("ad1 should contain 1 item", ad1.isEMpty());
+        assertFalse("ad1 should contain 1 item", ad1.isEmpty());
         ad1.removeLast();
-        assertTrue("ad1 should be empty after removal", ad1.isEMpty());
+        assertTrue("ad1 should be Empty after removal", ad1.isEmpty());
     }
 
     @Test
@@ -49,7 +49,7 @@ public class ArrayDequeTest {
         ad1.removeFirst();
 
         int size = ad1.size();
-        String errorMsg = "  Bad size returned when removing from empty deque.\n";
+        String errorMsg = "  Bad size returned when removing from Empty deque.\n";
         errorMsg += "  student size() returned " + size + "\n";
         errorMsg += "  actual size() returned 0\n";
 
@@ -84,7 +84,7 @@ public class ArrayDequeTest {
     }
 
     @Test
-    public void emptyNullReturnTest() {
+    public void EmptyNullReturnTest() {
         ArrayDeque<Integer> ad1 = new ArrayDeque<>();
         boolean passed1 = false;
         boolean passed2 = false;
