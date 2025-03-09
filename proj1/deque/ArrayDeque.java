@@ -83,6 +83,10 @@ public class ArrayDeque<T> {
     }
 
     public T get(int index) {
+        return items[index];
+    }
+
+    public T getInnerIndex(int index) {
         int innerIndex = nextFirst+index+1;
         innerIndex = (innerIndex < items.length) ? innerIndex : innerIndex % items.length;
         return items[innerIndex];
@@ -101,7 +105,7 @@ public class ArrayDeque<T> {
                 if (!hasNext()) {
                     return null;
                 }
-                return get(index+1);
+                return getInnerIndex(index+1);
             }
         };
     }
@@ -109,7 +113,7 @@ public class ArrayDeque<T> {
     public boolean equals(Object o) {
         if (o instanceof ArrayDeque && ((ArrayDeque<?>) o).size() == size) {
             for (int i = 0; i < size; i++) {
-                if (get(i) != ((ArrayDeque<?>) o).get(i)) {
+                if (getInnerIndex(i) != ((ArrayDeque<?>) o).getInnerIndex(i)) {
                     return false;
                 }
             }
