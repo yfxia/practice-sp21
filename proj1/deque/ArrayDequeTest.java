@@ -2,6 +2,9 @@ package deque;
 
 
 import org.junit.Test;
+
+import java.lang.reflect.Array;
+
 import static org.junit.Assert.*;
 
 
@@ -90,6 +93,39 @@ public class ArrayDequeTest {
         boolean passed2 = false;
         assertNull("Return null when removeFirst is called", ad1.removeFirst());
         assertNull("Return null when removeLast is called", ad1.removeLast());
+    }
+
+    @Test
+    public void midSizeArrayDequeTest() {
+        ArrayDeque<String> ad1 = new ArrayDeque<>();
+        ad1.addFirst("a");
+        ad1.addFirst("c");
+        ad1.addFirst("f");
+        ad1.addLast("b");
+        ad1.addLast("d");
+        ad1.addLast("e");
+        assertEquals("First item before resizing should be f", ad1.get(0), "f");
+//        ad1.printDeque();
+        ad1.addLast("g");
+        ad1.addLast("h");
+        ad1.addLast("z");
+//        ad1.printDeque();
+        assertEquals("First item after resizing should be f", ad1.get(0), "f");
+    }
+
+    @Test
+    public void bigSizeArrayDequeTest() {
+        ArrayDeque<Integer> ad1 = new ArrayDeque<>();
+        for (int i = 0; i < 1000000; i++) {
+                ad1.addLast(i);
+        }
+        for (double i = 0; i < 500000; i++) {
+            assertEquals("Should have the same value", i, (double) ad1.removeFirst(), 0.0);
+        }
+
+        for (double i = 999999; i > 500000; i--) {
+            assertEquals("Should have the same value", i, (double) ad1.removeLast(), 0.0);
+        }
     }
 
 }
