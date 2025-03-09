@@ -160,7 +160,7 @@ public class LinkedListDeque<T> {
                 if (!hasNext()) {
                     return null;
                 }
-                return get(index++);
+                return get(index+1);
             }
         };
     }
