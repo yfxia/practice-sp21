@@ -70,7 +70,7 @@ public class ArrayDeque<T> {
         }
         nextFirst = (nextFirst+1 >= items.length) ? 0 : nextFirst+1;
         size--;
-        return get(nextFirst);
+        return items[nextFirst];
     }
 
     public T removeLast() {
@@ -79,14 +79,10 @@ public class ArrayDeque<T> {
         }
         nextLast = (nextLast < 1) ? items.length-1 : nextLast-1;
         size--;
-        return get(nextLast);
+        return items[nextLast];
     }
 
     public T get(int index) {
-        return items[index];
-    }
-
-    public T getInnerIndex(int index) {
         int innerIndex = nextFirst+index+1;
         innerIndex = (innerIndex < items.length) ? innerIndex : innerIndex % items.length;
         return items[innerIndex];
@@ -105,7 +101,7 @@ public class ArrayDeque<T> {
                 if (!hasNext()) {
                     return null;
                 }
-                return getInnerIndex(index+1);
+                return get(index+1);
             }
         };
     }
@@ -113,7 +109,7 @@ public class ArrayDeque<T> {
     public boolean equals(Object o) {
         if (o instanceof ArrayDeque && ((ArrayDeque<?>) o).size() == size) {
             for (int i = 0; i < size; i++) {
-                if (getInnerIndex(i) != ((ArrayDeque<?>) o).getInnerIndex(i)) {
+                if (get(i) != ((ArrayDeque<?>) o).get(i)) {
                     return false;
                 }
             }
