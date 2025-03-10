@@ -2,9 +2,6 @@ package deque;
 
 
 import org.junit.Test;
-
-import java.lang.reflect.Array;
-
 import static org.junit.Assert.*;
 
 
@@ -23,7 +20,7 @@ public class ArrayDequeTest {
         ad1.addFirst("c");
         assertEquals(3, ad1.size());
 
-        ad1.printDeque();
+//        ad1.printDeque();
         
     }
 

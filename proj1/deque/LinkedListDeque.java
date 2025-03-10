@@ -2,7 +2,7 @@ package deque;
 
 import java.util.Iterator;
 
-public class LinkedListDeque<T> {
+public class LinkedListDeque<T> implements Deque<T>{
     private class ListNode {
         public T item;
         public ListNode prev;
@@ -30,6 +30,7 @@ public class LinkedListDeque<T> {
         size = 1;
     }
     /* Adds an item of type T to the front of the deque.*/
+    @Override
     public void addFirst(T item) {
         ListNode newNode = new ListNode(item, null, null);
         ListNode firstNode = (size > 0) ? sentinel.next: newNode;
@@ -43,6 +44,7 @@ public class LinkedListDeque<T> {
     }
 
     /** Adds an item of type T to the back of the deque */
+    @Override
     public void addLast(T item) {
         ListNode newNode = new ListNode(item, null, null);
         ListNode firstNode = (size > 0) ? sentinel.next: newNode;
@@ -59,12 +61,8 @@ public class LinkedListDeque<T> {
         size++;
     }
 
-    /** Returns true is deque is empty, false otherwise. */
-    public boolean isEmpty() {
-        return size == 0;
-    }
-
     /** Returns the number of items in the deque.*/
+    @Override
     public int size() {
         return size;
     }
@@ -73,6 +71,7 @@ public class LinkedListDeque<T> {
      * Prints the items in the deque from first to last, separated by a space.
      * Once all the items have been printed, print out a new line.
      */
+    @Override
     public void printDeque() {
         ListNode p = sentinel;
         for (int i = 0; i < size; i++) {
@@ -83,6 +82,7 @@ public class LinkedListDeque<T> {
     }
 
     /** Removes and returns the item at the front of the deque.*/
+    @Override
     public T removeFirst() {
         if (size < 1) {
             return null;
@@ -104,6 +104,7 @@ public class LinkedListDeque<T> {
     }
 
     /** Removes and returns the item at the back of the deque.*/
+    @Override
     public T removeLast() {
         if (size < 1) {
             return null;
@@ -124,6 +125,7 @@ public class LinkedListDeque<T> {
     }
 
     /** Gets the item at the given index. If no such item exists, return null*/
+    @Override
     public T get(int index) {
         ListNode p = sentinel;
         for (int i = 0; i < index; i++) {

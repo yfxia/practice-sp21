@@ -12,7 +12,7 @@ import java.util.Iterator;
  size: The number of items in the core array in the deque should be size.
  down-size: Memory usage must be proportional to the number of items.
  */
-public class ArrayDeque<T> {
+public class ArrayDeque<T> implements Deque<T>{
     private T[] items;
     private int size;
     private int nextFirst;
@@ -36,6 +36,7 @@ public class ArrayDeque<T> {
     }
 
     /** Adds an item of type T to the front of the deque.*/
+    @Override
     public void addFirst(T item) {
         if (size == items.length) {
             resize(size * 2);
@@ -45,6 +46,7 @@ public class ArrayDeque<T> {
         size++;
     }
 
+    @Override
     public void addLast(T item) {
         if (size == items.length) {
             resize(size * 2);
@@ -54,10 +56,12 @@ public class ArrayDeque<T> {
         size++;
     }
 
+    @Override
     public boolean isEmpty() {
         return size == 0;
     }
 
+    @Override
     public int size() {
         return size;
     }
@@ -69,6 +73,7 @@ public class ArrayDeque<T> {
         System.out.println();
     }
 
+    @Override
     public T removeFirst() {
         if (size < 1) {
             return null;
@@ -81,6 +86,7 @@ public class ArrayDeque<T> {
         return items[nextFirst];
     }
 
+    @Override
     public T removeLast() {
         if (size < 1) {
             return null;
@@ -99,6 +105,7 @@ public class ArrayDeque<T> {
         return innerIndex;
     }
 
+    @Override
     public T get(int index) {
         return items[getNextIndex(index)];
     }
