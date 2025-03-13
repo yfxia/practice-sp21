@@ -2,6 +2,9 @@ package deque;
 
 
 import org.junit.Test;
+
+import java.lang.reflect.Array;
+
 import static org.junit.Assert.*;
 
 
@@ -123,6 +126,24 @@ public class ArrayDequeTest {
         for (double i = 999999; i > 500000; i--) {
             assertEquals("Should have the same value", i, (double) ad1.removeLast(), 0.0);
         }
+    }
+
+    @Test
+    public void testGet() {
+        ArrayDeque<Integer> ad1 = new ArrayDeque<>();
+        ad1.addFirst(2);
+        assertEquals("First item should be 2", 2,(int) ad1.get(0));
+    }
+
+    @Test
+    public void testEquals() {
+        ArrayDeque<Integer> ad1 = new ArrayDeque<>();
+        ad1.addFirst(8);
+        ad1.addFirst(9);
+        ArrayDeque<Integer> ad2 = new ArrayDeque<>();
+        ad2.addLast(8);
+        ad2.addFirst(9);
+        assertTrue(ad1.equals(ad2));
     }
 
 }

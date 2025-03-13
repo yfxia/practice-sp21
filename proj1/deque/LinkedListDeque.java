@@ -128,14 +128,14 @@ public class LinkedListDeque<T> implements Deque<T>{
     @Override
     public T get(int index) {
         ListNode p = sentinel;
-        for (int i = 0; i < index; i++) {
+        for (int i = 0; i <= index; i++) {
             p = p.next;
         }
         return p.item;
     }
 
     private T getRecursive(int index, ListNode p) {
-        if (index > 0) {
+        if (index >= 0) {
             return getRecursive(index-1, p.next);
         }
         return p.item;
@@ -170,7 +170,7 @@ public class LinkedListDeque<T> implements Deque<T>{
     /** Returns whether the parameter o is equal to the Deque*/
     public boolean equals(Object o) {
         if (o instanceof LinkedListDeque && ((LinkedListDeque<?>) o).size() == size) {
-            ListNode p = sentinel;
+            ListNode p = sentinel.next;
             for (int i = 0; i < size; i++) {
                 if (p.item != ((LinkedListDeque<?>) o).get(i)) {
                     return false;
