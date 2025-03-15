@@ -12,7 +12,7 @@ import java.util.Iterator;
  size: The number of items in the core array in the deque should be size.
  down-size: Memory usage must be proportional to the number of items.
  */
-public class ArrayDeque<T> implements Deque<T>{
+public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     private T[] items;
     private int size;
     private int nextFirst;
@@ -27,11 +27,11 @@ public class ArrayDeque<T> implements Deque<T>{
 
     private void resize(int capacity) {
         T[] a = (T[]) new Object[capacity];
-        for (int i=0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             a[i] = get(i);
         }
         items = a;
-        nextFirst = items.length-1;
+        nextFirst = items.length - 1;
         nextLast = size;
     }
 
@@ -42,7 +42,7 @@ public class ArrayDeque<T> implements Deque<T>{
             resize(size * 2);
         }
         items[nextFirst] = item;
-        nextFirst = (nextFirst < 1) ? items.length-1 : nextFirst-1;
+        nextFirst = (nextFirst < 1) ? items.length - 1 : nextFirst - 1;
         size++;
     }
 
@@ -52,13 +52,8 @@ public class ArrayDeque<T> implements Deque<T>{
             resize(size * 2);
         }
         items[nextLast] = item;
-        nextLast = (nextLast+1 >= items.length) ? 0 : nextLast+1;
+        nextLast = (nextLast + 1 >= items.length) ? 0 : nextLast + 1;
         size++;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return size == 0;
     }
 
     @Override
@@ -78,10 +73,10 @@ public class ArrayDeque<T> implements Deque<T>{
         if (size < 1) {
             return null;
         }
-        if ((size < items.length / 4) && (size > 16)) {
+        if ((size < items.length / 4) && (items.length > 16)) {
             resize(items.length / 2);
         }
-        nextFirst = (nextFirst+1 >= items.length) ? 0 : nextFirst+1;
+        nextFirst = (nextFirst + 1 >= items.length) ? 0 : nextFirst + 1;
         size--;
         return items[nextFirst];
     }
@@ -94,13 +89,13 @@ public class ArrayDeque<T> implements Deque<T>{
         if ((size < items.length / 4) && (items.length > 16)) {
             resize(items.length / 4);
         }
-        nextLast = (nextLast < 1) ? items.length-1 : nextLast-1;
+        nextLast = (nextLast < 1) ? items.length - 1 : nextLast - 1;
         size--;
         return items[nextLast];
     }
 
-    public int getNextIndex(int index) {
-        int innerIndex = nextFirst+index+1;
+    private int getNextIndex(int index) {
+        int innerIndex = nextFirst + index + 1;
         innerIndex = (innerIndex < items.length) ? innerIndex : innerIndex % items.length;
         return innerIndex;
     }

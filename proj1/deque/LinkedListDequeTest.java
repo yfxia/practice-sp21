@@ -142,8 +142,10 @@ public class LinkedListDequeTest {
     public void testEquals() {
         LinkedListDeque<Integer> lld1 = new LinkedListDeque<>();
         lld1.addFirst(8);
+        lld1.addLast(10);
         LinkedListDeque<Integer> lld2 = new LinkedListDeque<>();
         lld2.addLast(8);
+        lld2.addLast(10);
         assertTrue("Two LLD should be the same", lld1.equals(lld2));
     }
 

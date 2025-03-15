@@ -2,13 +2,13 @@ package deque;
 
 import java.util.Iterator;
 
-public class LinkedListDeque<T> implements Deque<T>{
+public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     private class ListNode {
-        public T item;
-        public ListNode prev;
-        public ListNode next;
+        private T item;
+        private ListNode prev;
+        private ListNode next;
 
-        public ListNode(T i, ListNode p, ListNode n) {
+        private ListNode(T i, ListNode p, ListNode n) {
             item = i;
             prev = p;
             next = n;
@@ -24,17 +24,12 @@ public class LinkedListDeque<T> implements Deque<T>{
         size = 0;
     }
 
-    public LinkedListDeque(T x) {
-        sentinel = new ListNode(null, null, null);
-        sentinel.next = new ListNode(x, sentinel.next, sentinel.next);
-        size = 1;
-    }
     /* Adds an item of type T to the front of the deque.*/
     @Override
     public void addFirst(T item) {
         ListNode newNode = new ListNode(item, null, null);
-        ListNode firstNode = (size > 0) ? sentinel.next: newNode;
-        ListNode lastNode = (size > 0) ? sentinel.next.prev: newNode;
+        ListNode firstNode = (size > 0) ? sentinel.next : newNode;
+        ListNode lastNode = (size > 0) ? sentinel.next.prev : newNode;
         sentinel.next = newNode;
         firstNode.prev = newNode;
         lastNode.next = newNode;
@@ -47,8 +42,8 @@ public class LinkedListDeque<T> implements Deque<T>{
     @Override
     public void addLast(T item) {
         ListNode newNode = new ListNode(item, null, null);
-        ListNode firstNode = (size > 0) ? sentinel.next: newNode;
-        ListNode lastNode = (size > 0) ? sentinel.next.prev: newNode;
+        ListNode firstNode = (size > 0) ? sentinel.next : newNode;
+        ListNode lastNode = (size > 0) ? sentinel.next.prev : newNode;
         if (isEmpty()) {
             sentinel.next = newNode;
         } else {
@@ -136,7 +131,7 @@ public class LinkedListDeque<T> implements Deque<T>{
 
     private T getRecursive(int index, ListNode p) {
         if (index >= 0) {
-            return getRecursive(index-1, p.next);
+            return getRecursive(index - 1, p.next);
         }
         return p.item;
     }
@@ -177,6 +172,7 @@ public class LinkedListDeque<T> implements Deque<T>{
                 if (!p.item.equals(((LinkedListDeque<?>) o).get(i))) {
                     return false;
                 }
+                p = p.next;
             }
             return true;
         }

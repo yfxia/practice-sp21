@@ -137,12 +137,14 @@ public class ArrayDequeTest {
         for (int i = 0; i < 1000000; i++) {
                 ad1.addLast(i);
         }
-        for (double i = 0; i < 500000; i++) {
-            assertEquals("Should have the same value", i, (double) ad1.removeFirst(), 0.0);
+        for (int i = 0; i < 500000; i++) {
+            int actualVal = ad1.removeFirst();
+            assertEquals("Should have the same value", i, actualVal, 0);
         }
 
-        for (double i = 999999; i > 500000; i--) {
-            assertEquals("Should have the same value", i, (double) ad1.removeLast(), 0.0);
+        for (int i = 999999; i > 500000; i--) {
+            int actualVal = ad1.removeLast();
+            assertEquals("Should have the same value", i, actualVal, 0);
         }
     }
 
