@@ -150,21 +150,23 @@ public class LinkedListDeque<T> implements Deque<T>{
 
     /** Use this method to return an iterator */
     public Iterator<T> iterator() {
-        return new Iterator<T>() {
-            private int index = 0;
-            @Override
-            public boolean hasNext() {
-                return index < size;
-            }
+        return new LinkedListDequeIterator();
+    }
 
-            @Override
-            public T next() {
-                if (!hasNext()) {
-                    return null;
-                }
-                return get(index+1);
-            }
-        };
+    private class LinkedListDequeIterator implements Iterator<T> {
+        private int wizPos;
+        public LinkedListDequeIterator() {
+            wizPos = 0;
+        }
+        public boolean hasNext() {
+            return wizPos < size;
+        }
+
+        public T next() {
+            T returnItem = get(wizPos);
+            wizPos += 1;
+            return returnItem;
+        }
     }
 
     /** Returns whether the parameter o is equal to the Deque*/
@@ -172,7 +174,7 @@ public class LinkedListDeque<T> implements Deque<T>{
         if (o instanceof LinkedListDeque && ((LinkedListDeque<?>) o).size() == size) {
             ListNode p = sentinel.next;
             for (int i = 0; i < size; i++) {
-                if (p.item != ((LinkedListDeque<?>) o).get(i)) {
+                if (!p.item.equals(((LinkedListDeque<?>) o).get(i))) {
                     return false;
                 }
             }

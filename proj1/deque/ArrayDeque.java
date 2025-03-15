@@ -79,7 +79,7 @@ public class ArrayDeque<T> implements Deque<T>{
             return null;
         }
         if ((size < items.length / 4) && (size > 16)) {
-            resize(items.length / 4);
+            resize(items.length / 2);
         }
         nextFirst = (nextFirst+1 >= items.length) ? 0 : nextFirst+1;
         size--;
@@ -91,7 +91,7 @@ public class ArrayDeque<T> implements Deque<T>{
         if (size < 1) {
             return null;
         }
-        if ((size < items.length / 4) && (size > 16)) {
+        if ((size < items.length / 4) && (items.length > 16)) {
             resize(items.length / 4);
         }
         nextLast = (nextLast < 1) ? items.length-1 : nextLast-1;
@@ -111,27 +111,29 @@ public class ArrayDeque<T> implements Deque<T>{
     }
 
     public Iterator<T> iterator() {
-        return new Iterator<T>() {
-            private int index = 0;
-            @Override
-            public boolean hasNext() {
-                return index < size;
-            }
+        return new ArrayDequeIterator();
+    }
 
-            @Override
-            public T next() {
-                if (!hasNext()) {
-                    return null;
-                }
-                return get(index+1);
-            }
-        };
+    private class ArrayDequeIterator implements Iterator<T> {
+        private int wizPos;
+        public ArrayDequeIterator() {
+            wizPos = 0;
+        }
+        public boolean hasNext() {
+            return wizPos < size;
+        }
+
+        public T next() {
+            T returnItem = get(wizPos);
+            wizPos += 1;
+            return returnItem;
+        }
     }
 
     public boolean equals(Object o) {
-        if (o instanceof ArrayDeque && ((ArrayDeque<?>) o).size() == size) {
+        if (o instanceof ArrayDeque &&  ((ArrayDeque<?>) o).size() == size) {
             for (int i = 0; i < size; i++) {
-                if (get(i) != ((ArrayDeque<?>) o).get(i)) {
+                if (!get(i).equals(((ArrayDeque<?>) o).get(i))) {
                     return false;
                 }
             }

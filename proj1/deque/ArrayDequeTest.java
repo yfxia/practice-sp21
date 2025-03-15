@@ -4,6 +4,7 @@ package deque;
 import org.junit.Test;
 
 import java.lang.reflect.Array;
+import java.util.Iterator;
 
 import static org.junit.Assert.*;
 
@@ -114,6 +115,23 @@ public class ArrayDequeTest {
     }
 
     @Test
+    public void smallSizeArrayDequeTest() {
+        ArrayDeque<Integer> ad1 = new ArrayDeque<>();
+        for (int i = 0; i < 65; i++) {
+            ad1.addLast(i);
+        }
+        for (int i = 0; i < 30; i++) {
+            Integer actualVal = ad1.removeFirst();
+            assertEquals("Should have the same value", i, actualVal, 0);
+        }
+
+        for (int i = 64; i > 30; i--) {
+            Integer actualVal = ad1.removeLast();
+            assertEquals("Should have the same value", i, actualVal, 0);
+        }
+    }
+
+    @Test
     public void bigSizeArrayDequeTest() {
         ArrayDeque<Integer> ad1 = new ArrayDeque<>();
         for (int i = 0; i < 1000000; i++) {
@@ -144,6 +162,16 @@ public class ArrayDequeTest {
         ad2.addLast(8);
         ad2.addFirst(9);
         assertTrue(ad1.equals(ad2));
+    }
+
+    @Test
+    public void testIterator() {
+        ArrayDeque<Integer> ad1 = new ArrayDeque<>();
+        ad1.addFirst(2);
+        Iterator<Integer> aseer = ad1.iterator();
+//        while (aseer.hasNext()) {
+//            System.out.println(aseer.next());
+//        }
     }
 
 }
