@@ -150,7 +150,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
 
     private class LinkedListDequeIterator implements Iterator<T> {
         private int wizPos;
-        public LinkedListDequeIterator() {
+        private LinkedListDequeIterator() {
             wizPos = 0;
         }
         public boolean hasNext() {
@@ -166,10 +166,10 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
 
     /** Returns whether the parameter o is equal to the Deque*/
     public boolean equals(Object o) {
-        if (o instanceof LinkedListDeque && ((LinkedListDeque<?>) o).size() == size) {
+        if (o instanceof Deque && ((Deque<?>) o).size() == size) {
             ListNode p = sentinel.next;
             for (int i = 0; i < size; i++) {
-                if (!p.item.equals(((LinkedListDeque<?>) o).get(i))) {
+                if (!p.item.equals(((Deque<?>) o).get(i))) {
                     return false;
                 }
                 p = p.next;
