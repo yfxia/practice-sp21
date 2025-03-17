@@ -43,12 +43,14 @@ public class TestArrayDequeEC {
 
         deque.addLast(num);
         deque.addLast(num+3);
+        deque.addFirst(num+4);
         return deque.removeLast();
     }
     public Integer addLastRemoveSolution(int num, ArrayDequeSolution<Integer> deque) {
 
         deque.addLast(num);
         deque.addLast(num+3);
+        deque.addFirst(num+4);
         return deque.removeLast();
     }
 
@@ -57,7 +59,7 @@ public class TestArrayDequeEC {
         StudentArrayDeque<Integer> sad1 = new StudentArrayDeque<>();
         ArrayDequeSolution<Integer> ads1 = new ArrayDequeSolution<>();
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 1000; i++) {
             double uniRandomNum = StdRandom.uniform();
             if (uniRandomNum < 0.5) {
                 assertEquals(addFirstRemoveStudent(i, sad1), addFirstRemoveSolution(i, ads1));
