@@ -40,11 +40,13 @@ public class TestArrayDequeEC {
             if (uniRandomNum < 0.5) {
                 Integer sad1First = sad1.removeFirst();
                 Integer ads1First = ads1.removeFirst();
-                assertEquals("Removing the first item of two array implementations should give the same value",sad1First, ads1First);
+                assertEquals("removeFirst(), student was " + sad1First
+                        + " correct was " + ads1First, sad1First, ads1First);
             } else {
                 Integer sad1Last = sad1.removeLast();
                 Integer ads1Last = ads1.removeLast();
-                assertEquals("Removing the last item of two array implementations should give the same value", sad1Last, ads1Last);
+                assertEquals("RemoveLast(), student was " + sad1Last
+                        + " correct was " + ads1Last, sad1Last, ads1Last);
             }
         }
 
