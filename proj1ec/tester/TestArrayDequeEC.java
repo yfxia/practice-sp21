@@ -31,14 +31,14 @@ public class TestArrayDequeEC {
         ArrayDequeSolution<Integer> ads1 = new ArrayDequeSolution<>();
         StringBuilder methodCalls = new StringBuilder();
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10; i++) {
             double uniRandomNum = StdRandom.uniform();
             if (uniRandomNum < 0.5) {
-                sad1.addFirst(i);
+                sad1.addFirst(i-1);
                 sad1.addFirst(i*2);
-                methodCalls.append("addFirst(").append(i).append(")").append("\n");
-                ads1.addFirst(i);
+                ads1.addFirst(i-1);
                 ads1.addFirst(i*2);
+                methodCalls.append("addFirst(").append(i-1).append(")").append("\n");
                 methodCalls.append("addFirst(").append(i*2).append(")").append("\n");
                 sad1.addLast(i+3);
                 ads1.addLast(i+3);
@@ -47,12 +47,15 @@ public class TestArrayDequeEC {
                 Integer ads1First = ads1.removeFirst();
                 methodCalls.append("RemoveFirst()").append("\n");
                 assertEquals(String.valueOf(methodCalls), ads1First, sad1First);
+                Integer sad1Last = sad1.removeLast();
+                Integer ads1Last = ads1.removeLast();
+                assertEquals(String.valueOf(methodCalls), ads1Last, sad1Last);
             } else {
-                sad1.addLast(i);
+                sad1.addLast(i-10);
                 sad1.addLast(i+1);
-                methodCalls.append("addLast(").append(i).append(")").append("\n");
-                ads1.addLast(i);
+                ads1.addLast(i-10);
                 ads1.addLast(i+1);
+                methodCalls.append("addLast(").append(i-10).append(")").append("\n");
                 methodCalls.append("addLast(").append(i+1).append(")").append("\n");
                 ads1.addFirst(i+4);
                 sad1.addFirst(i+4);
