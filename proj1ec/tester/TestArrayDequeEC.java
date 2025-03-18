@@ -49,6 +49,7 @@ public class TestArrayDequeEC {
                 assertEquals(String.valueOf(methodCalls), ads1First, sad1First);
                 Integer sad1Last = sad1.removeLast();
                 Integer ads1Last = ads1.removeLast();
+                methodCalls.append("RemoveLast()").append("\n");
                 assertEquals(String.valueOf(methodCalls), ads1Last, sad1Last);
             } else {
                 sad1.addLast(i-10);
