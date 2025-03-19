@@ -31,7 +31,7 @@ public class TestArrayDequeEC {
         ArrayDequeSolution<Integer> ads1 = new ArrayDequeSolution<>();
         StringBuilder methodCalls = new StringBuilder();
 
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 100; i++) {
             double uniRandomNum = StdRandom.uniform();
             if (uniRandomNum < 0.5) {
                 sad1.addFirst(i-1);
