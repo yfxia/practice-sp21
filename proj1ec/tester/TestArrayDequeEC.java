@@ -44,7 +44,7 @@ public class TestArrayDequeEC {
                 methodCalls.append("addFirst(").append(i*2).append(")").append("\n");
                 sad1Remove = sad1.removeFirst();
                 ads1Remove = ads1.removeFirst();
-                methodCalls.append("RemoveFirst()").append("\n");
+                methodCalls.append("removeFirst()").append("\n");
                 assertEquals(String.valueOf(methodCalls), ads1Remove, sad1Remove);
             } else {
                 sad1.addLast(i-10);
@@ -58,10 +58,44 @@ public class TestArrayDequeEC {
                 methodCalls.append("addFirst(").append(i+4).append(")").append("\n");
                 sad1Remove = sad1.removeLast();
                 ads1Remove = ads1.removeLast();
-                methodCalls.append("RemoveLast()").append("\n");
+                methodCalls.append("removeLast()").append("\n");
                 assertEquals(String.valueOf(methodCalls), ads1Remove, sad1Remove);
             }
         }
 
+    }
+
+    @Test
+    public void testFailureSequence() {
+        ArrayDequeSolution<Integer> ads = new ArrayDequeSolution<>();
+//        ads.addFirst(0);
+//        ads.RemoveFirst();
+//        ads.addFirst(0);
+//        ads.addFirst(2);
+//        ads.RemoveFirst();
+//        ads.addLast(-8);
+//        ads.addLast(3);
+//        ads.addFirst(6);
+//        ads.RemoveLast();
+//        ads.addFirst(2);
+//        ads.addFirst(6);
+//        ads.RemoveFirst();
+//        ads.addFirst(3);
+//        ads.addFirst(8);
+//        ads.RemoveFirst();;
+//        ads.addLast(-5);
+//        ads.addLast(6);
+//        ads.addFirst(9);
+//        ads.RemoveLast();
+//        ads.addFirst(5);
+//        ads.addFirst(12);
+//        ads.RemoveFirst();
+//        ads.addFirst(6);
+//        ads.addFirst(14);
+//        ads.RemoveFirst();
+//        ads.addLast(-2);
+//        ads.addLast(9);
+//        ads.addFirst(12);
+//        ads.RemoveLast();
     }
 }
