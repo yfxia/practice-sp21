@@ -1,6 +1,8 @@
 package gitlet;
 
 import java.io.File;
+import java.io.IOException;
+
 import static gitlet.Utils.*;
 
 // TODO: any imports you need here
@@ -9,7 +11,7 @@ import static gitlet.Utils.*;
  *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
- *  @author TODO
+ *  @author Sophia Xia
  */
 public class Repository {
     /**
@@ -26,4 +28,12 @@ public class Repository {
     public static final File GITLET_DIR = join(CWD, ".gitlet");
 
     /* TODO: fill in the rest of this class. */
+    public static void setupPersistence() {
+        File stagedAdd = join(GITLET_DIR, "staged_add");
+        stagedAdd.mkdirs();
+        File stagedRm = join(GITLET_DIR, "staged_remove");
+        stagedRm.mkdirs();
+        File commits = join(GITLET_DIR, "commits");
+        commits.mkdirs();
+    }
 }

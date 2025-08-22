@@ -1,10 +1,11 @@
 # Gitlet Design Document
 
-**Name**:
+**Name**: Sophia Xia
 
 ## Classes and Data Structures
 
-### Class 1
+### Main
+
 
 #### Fields
 
@@ -23,4 +24,17 @@
 ## Algorithms
 
 ## Persistence
-
+The directory structure looks like this
+```dtd
+CWD
+├── .gitlet
+│   ├── Commit.java
+│   ├── DumpObj.java
+│   ├── Dumpable.java
+│   ├── GitletException.java
+│   ├── Main.java
+│   ├── Makefile
+│   ├── Repository.java
+│   ├── Utils.java
+│   └── sentinel
+```
