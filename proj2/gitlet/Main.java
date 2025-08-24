@@ -12,7 +12,7 @@ public class Main {
      */
     public static void main(String[] args) throws IOException {
         if (args.length == 0) {
-            Utils.error("Must have at least one argument");
+            throw Utils.error("Must have at least one argument");
         }
 
         Repository.setupPersistence();
@@ -23,9 +23,19 @@ public class Main {
                 Commit.makeAnInitCommit();
                 break;
             case "add":
-                // TODO: handle the `add [filename]` command
+                validateNumArgs("add", args, 2);
+                String addFileName = args[1];
+                Commit.addACommit(addFileName);
                 break;
-            // TODO: FILL THE REST IN
+            case "rm":
+                validateNumArgs("rm", args, 2);
+                String rmFileName = args[1];
+                Commit.removeACommit(rmFileName);
+            case "status":
+                validateNumArgs("status", args, 1);
+                break;
+            default:
+                throw Utils.error(String.format("Unknown command: %s", firstArg));
         }
     }
 

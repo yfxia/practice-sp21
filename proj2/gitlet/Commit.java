@@ -2,7 +2,6 @@ package gitlet;
 
 // TODO: any imports you need here
 import java.io.File;
-import static gitlet.Utils.*;
 
 import java.io.IOException;
 import java.sql.Timestamp;
@@ -44,15 +43,25 @@ public class Commit {
      */
     private String commitId;
 
+    /*
+    * The head pointer keeps track of the linked list we currently are.
+    */
+    private String head;
+
     public static final String DEFAULT_BRANCH = "master";
 
     static final File COMMIT_FOLDER = Utils.join(Repository.GITLET_DIR, "commits");
 
     /**
-     * Creates an initial commit.
-     * */
+     * Creates a new Gitlet version-control system in current directory
+     * that starts with one empty commit.
+     * Initialize two pointers: One branch - master; HEAD - branch currently checked out to.
+     * @return a Commit object
+     * @throws IOException
+     */
     public static Commit makeAnInitCommit() throws IOException {
         Commit commit = new Commit();
+        // Includes all metadata and references when hashing a commit? Timestamp??
         commit.commitId = Utils.sha1("");
         File initCommitFile = Utils.join(COMMIT_FOLDER, commit.commitId);
         if (initCommitFile.exists()){
@@ -64,5 +73,47 @@ public class Commit {
             commit.message = "initial commit";
         }
         return commit;
+    }
+
+    /**
+     * Adds a copy of the file as it currently exits to the staging area.
+     * Staging an already-staged file overwrite the previous entry.
+     * @param fileName: The name of the file to be added for commit
+     */
+    public static void addACommit(String fileName) throws IOException {
+        // Check if the file exists in the Current Working Directory
+        File file = Utils.join(Repository.CWD, fileName);
+        if (!file.exists()) throw Utils.error("File does not exist.");
+        // create a blob: saved contents of the file.
+        String fileContent = Utils.readContentsAsString(file);
+        // Check if the file is staged for addition already
+        File stagedFile = Utils.join(Repository.GITLET_DIR, "staged_add", fileName);
+        if (stagedFile.exists()) {
+            String stagedFileContent = Utils.readContentsAsString(stagedFile);
+            // If CWD version of the file is identical to the one in current commit, remove it.
+            if (fileContent.equals(stagedFileContent)) {
+                // leverage git rm
+                Commit.removeACommit(fileName);
+            }
+        // Otherwise, stage this file for addition and overwrites previous entry if any.
+        } else {
+            Utils.writeContents(stagedFile, fileContent);
+        }
+    }
+
+    /**
+     * Unstage the file if it is currently staged for addition.
+     * @param fileName
+     */
+    public static void removeACommit(String fileName) {
+        // How to track a file on the head commit?
+    }
+
+    /**
+     * Displays what branches currently exist, and marks the current branch with *.
+     * Also displays what files have been staged for addition or removal.
+     */
+    public static void checkCommitStatus() {
+        // branch has a pointer
     }
 }

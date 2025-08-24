@@ -13,7 +13,8 @@
 2. Field 2
 
 
-### Class 2
+### Repository
+This class defers all `Commit` specific logic to `Commit` class.
 
 #### Fields
 
