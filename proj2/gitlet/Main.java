@@ -10,7 +10,7 @@ public class Main {
     /** Usage: java gitlet.Main ARGS, where ARGS contains
      *  <COMMAND> <OPERAND1> <OPERAND2> ...
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         if (args.length == 0) {
             throw Utils.error("Must have at least one argument");
         }
@@ -40,7 +40,7 @@ public class Main {
                 validateNumArgs("status", args, 1);
                 break;
             default:
-                throw Utils.error(String.format("Unknown command: %s", firstArg));
+                Utils.message(String.format("Unknown command: %s", firstArg));
         }
     }
 

@@ -40,11 +40,15 @@ public class Repository {
      *     - objects -- file-system hashtable
      *     - index -- maps associated with the commits
      */
-    public static void setupPersistence() throws IOException {
+    public static void setupPersistence() {
         STAGED_ADD_FOLDER.mkdirs();
         STAGED_RM_FOLDER.mkdirs();
         INDEX_FOLDER.mkdirs();
-        HEAD.createNewFile();
+        try {
+            HEAD.createNewFile();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         REFS.mkdirs();
     }
 
@@ -52,7 +56,7 @@ public class Repository {
      * Creates a new Gitlet version-control system that starts with one empty commit.
      * Initialize two pointers: One branch - master; HEAD - branch currently checked out to.
      */
-    public Repository() throws IOException {
+    public Repository() {
         // Initialize a brand-new commit
         Commit initCommitInstance = new Commit("initial commit", MASTER,null);
         // Includes all metadata and references when hashing a commit
@@ -103,7 +107,7 @@ public class Repository {
      *
      * @param message: message contains in this commit
      */
-    public static void createCommit(String message) throws IOException {
+    public static void createCommit(String message) {
         TreeMap<String,String> fileIndex = buildFileIndexFromStage();
         if (message == null){
             throw Utils.error("Please enter a commit message.");
@@ -146,14 +150,18 @@ public class Repository {
         return readObject(file, expectedClass);
     }
 
-    public static void setBranchReference(String branch, String commitId) throws IOException {
+    public static void setBranchReference(String branch, String commitId) {
         File branchFile = Utils.join(REFS, branch);
-        branchFile.createNewFile();
+        try {
+            branchFile.createNewFile();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         writeContents(branchFile, commitId);
 //        DumpObj.main(branchFile.getAbsolutePath());
     }
 
-    public static String getBranchReference(String branch) throws IOException {
+    public static String getBranchReference(String branch) {
         File branchFile = Utils.join(REFS, branch);
         return readContentsAsString(branchFile);
     }
@@ -165,7 +173,7 @@ public class Repository {
 //        DumpObj.main(headFile.getAbsolutePath());
     }
 
-    public static String getHeadReference() throws IOException {
+    public static String getHeadReference() {
         File headFile = Utils.join(HEAD);
         return readContentsAsString(headFile);
     }
