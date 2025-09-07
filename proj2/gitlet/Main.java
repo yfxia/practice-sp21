@@ -19,25 +19,29 @@ public class Main {
         String firstArg = args[0];
         switch(firstArg) {
             case "init":
-                validateNumArgs("init", args, 1);
+                validateNumArgs("init", args, 1, 1);
                 new Repository();
                 break;
             case "add":
-                validateNumArgs("add", args, 2);
+                validateNumArgs("add", args, 2, 2);
                 String addFileName = args[1];
                 Repository.stageCommit(addFileName);
                 break;
             case "commit":
-                validateNumArgs("commit", args, 2);
+                validateNumArgs("commit", args, 2, 2);
                 String commitFileName = args[1];
                 Repository.createCommit(commitFileName);
                 break;
+            case "checkout":
+                validateNumArgs("checkout", args, 2, 4);
+                Repository.checkOutCommit(args);
+                break;
             case "rm":
-                validateNumArgs("rm", args, 2);
+                validateNumArgs("rm", args, 2, 2);
                 String rmFileName = args[1];
 //                Commit.removeCommit(rmFileName);
             case "status":
-                validateNumArgs("status", args, 1);
+                validateNumArgs("status", args, 1, 1);
                 break;
             default:
                 Utils.message(String.format("Unknown command: %s", firstArg));
@@ -50,10 +54,10 @@ public class Main {
      *
      * @param cmd Name of command you are validating
      * @param args Argument array from command line
-     * @param n Number of expected arguments
+     * @param lowerBound/UpperBound Number of expected arguments
      */
-    public static void validateNumArgs(String cmd, String[] args, int n) {
-        if (args.length != n) {
+    public static void validateNumArgs(String cmd, String[] args, int lowerBound, int upperBound) {
+        if (args.length < lowerBound || args.length > upperBound) {
             throw new RuntimeException(
                     String.format("Invalid number of arguments for: %s.", cmd));
         }

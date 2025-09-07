@@ -45,8 +45,7 @@ public class Commit implements Serializable {
     /** The parent transient reference of the commit. */
     private transient String parent;
 
-    /** Master Branch of the gitlet*/
-    public static String master;
+    private TreeMap<String, String> fileIndex = new TreeMap<>();
 
 
     /***
@@ -65,10 +64,37 @@ public class Commit implements Serializable {
         }
     }
 
-    public void updateCommitTree() {
-        String commitId = this.getCommitId();
+    public String getFileIndex(String fileName) {
+        return this.fileIndex.get(fileName);
     }
 
+    public void setFileIndex() {
+        List<String> files = Utils.plainFilenamesIn(Repository.STAGED_ADD_FOLDER);
+        if (files == null) {
+            // Failure case 1: If no files have been staged, abort.
+            throw Utils.error("No changes added to the commit.");
+        }
+        for (String fileName : files) {
+            File file = Utils.join(Repository.STAGED_ADD_FOLDER, fileName);
+            String fileContent = Utils.readContentsAsString(file);
+            String blob = Utils.sha1(fileContent);
+            this.fileIndex.put(fileName, blob);
+            Commit.saveFileBlob(blob, fileContent);
+            // The staging area is cleared after a commit.
+            Utils.restrictedDelete(fileName);
+        }
+    }
+
+    public static void saveFileBlob(String blobId, String contents) {
+        File outFile = Utils.join(OBJECT_FOLDER, blobId.substring(0,2), blobId.substring(2));
+        outFile.getParentFile().mkdirs();
+        Utils.writeContents(outFile, contents);
+    }
+
+    public static String readFileBlob(String blobId) {
+        File file =  Utils.join(OBJECT_FOLDER, blobId.substring(0,2), blobId.substring(2));
+        return Utils.readContentsAsString(file);
+    }
 
     /**
      * Reads in and deserializes a commit from a file
@@ -85,11 +111,15 @@ public class Commit implements Serializable {
      * Serialize the Commit object to objects/ in a file that is the same as its commitId.
      * If already exists, no changes needed.
      */
-    public void saveCommit(){
+    public String saveCommit(){
         commitId = this.getCommitId();
         File outFile = Utils.join(OBJECT_FOLDER, commitId.substring(0,2), commitId.substring(2));
+        if (outFile.exists()){
+            throw Utils.error("A Gitlet version-control system already exists in the current directory.");
+        }
         outFile.getParentFile().mkdirs();
-        Utils.writeObject(outFile, commitId);
+        Utils.writeObject(outFile, this);
+        return commitId;
     }
 
     /**
@@ -98,10 +128,6 @@ public class Commit implements Serializable {
      */
     public String getMessage() {
         return this.message;
-    }
-
-    public static String getMasterCommit() {
-        return master;
     }
 
     public String getBranch() {
@@ -121,7 +147,7 @@ public class Commit implements Serializable {
         return this.parent;
     }
 
-    public String getCommitId() {
+    private String getCommitId() {
         this.commitId = Utils.sha1((Object) Utils.serialize(this));
         return this.commitId;
     }

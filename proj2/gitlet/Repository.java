@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Objects;
 import java.util.TreeMap;
 
 import static gitlet.Utils.*;
@@ -33,7 +34,10 @@ public class Repository {
     private static final File REFS = join(GITLET_DIR, "refs", "heads");
 
     private static final String MASTER = "master";
+
+
     /**
+     * Set up Gitlet Persistence
      * .gitlet/ -- top level folder for all persistent data
      *     - staged_add -- staging area for files to be added
      *     - staged_rm -- staging area for files to be removed
@@ -60,12 +64,7 @@ public class Repository {
         // Initialize a brand-new commit
         Commit initCommitInstance = new Commit("initial commit", MASTER,null);
         // Includes all metadata and references when hashing a commit
-        String commitId = initCommitInstance.getCommitId();
-        File initCommitFile = Utils.join(Commit.OBJECT_FOLDER, commitId.substring(0, 2), commitId.substring(2));
-        if (initCommitFile.exists()){
-            throw Utils.error("A Gitlet version-control system already exists in the current directory.");
-        }
-        initCommitInstance.saveCommit();
+        String commitId = initCommitInstance.saveCommit();
         setHeadReference(MASTER);
         setBranchReference(MASTER, commitId);
     }
@@ -99,16 +98,15 @@ public class Repository {
             }
             // Otherwise, stage this file for addition and overwrites previous entry if any.
         } else {
-            Utils.writeObject(stagedFile, fileContent);
+            Utils.writeContents(stagedFile, fileContent);
         }
     }
 
     /**
-     *
+     * Create a new commit
      * @param message: message contains in this commit
      */
     public static void createCommit(String message) {
-        TreeMap<String,String> fileIndex = buildFileIndexFromStage();
         if (message == null){
             throw Utils.error("Please enter a commit message.");
         }
@@ -116,30 +114,55 @@ public class Repository {
         String currentBranch = headRef.substring(headRef.lastIndexOf("/") + 1);
         String parentCommitId = getBranchReference(currentBranch);
         Commit myCommitInstance = new Commit(message, currentBranch, parentCommitId);
-        myCommitInstance.saveCommit();
-        setBranchReference(currentBranch, parentCommitId);
+        myCommitInstance.setFileIndex();
+        String commitId = myCommitInstance.saveCommit();
+        setBranchReference(currentBranch, commitId);
     }
 
-    private static TreeMap<String,String> buildFileIndexFromStage(){
-        List<String> files = Utils.plainFilenamesIn(STAGED_ADD_FOLDER);
-        TreeMap<String, String> fileIndex =  new TreeMap<>();
-        if (files == null) {
-            // Failure case 1: If no files have been staged, abort.
-            throw Utils.error("No changes added to the commit.");
+    /**
+     * Checking out to an existing snapshot of the Repository.
+     * @param args: User-input list of String arguments
+     */
+    public static void checkOutCommit(String[] args) {
+        String firstArg = args[1];
+        // Usage 3: checkout [branch name], take all files at the head of the given branch.
+        if (args.length == 2){
+            File file = Utils.join(REFS, firstArg);
+            if (!file.exists()) throw Utils.error("No such branch exists.");
+            String headRef = getHeadReference();
+            if (headRef.equals(file.getName())) {
+                message("No need to checkout the current branch.");
+            }
+        // Usage 1: checkout -- [file name], takes the version of the file and puts it in CWD.
+        } else if (firstArg.equals("--")) {
+            String fileName = args[2];
+            String headRef = getHeadReference();
+            String currentBranch = headRef.substring(headRef.lastIndexOf("/") + 1);
+            String parentCommitId = getBranchReference(currentBranch);
+            Commit parentCommitInstance = Commit.fromObject(parentCommitId);
+
+            File file = Utils.join(Commit.OBJECT_FOLDER, parentCommitId.substring(0, 2), parentCommitId.substring(2));
+            if (!file.exists()) throw Utils.error("File does not exist in that commit.");
+            String blob = parentCommitInstance.getFileIndex(fileName);
+            saveFileToCWD(fileName, Commit.readFileBlob(blob));
+
+        // Usage 2: checkout [commit id] -- [file name], takes the commit version and puts it in CWD.
+        } else if (args[2].equals("--")) {
+            String commitId = args[1];
+            String fileName = args[3];
+            File file = Utils.join(Commit.OBJECT_FOLDER, commitId.substring(0, 2), commitId.substring(2));
+            if (!file.exists()) throw Utils.error("No commit with that id exists.");
         }
-        for (String file : files) {
-            fileIndex.put(file, getFileBlob(file));
-            // The staging area is cleared after a commit.
-            Utils.restrictedDelete(file);
-        }
-        return fileIndex;
+    }
+
+    public static void saveFileToCWD(String fileName, String contents) {
+        File file = Utils.join(CWD, fileName);
+        writeContents(file, contents);
     }
 
     public static void removeCommit(String fileName) {
         File file = Utils.join(Repository.CWD, fileName);
     }
-
-//    public static void
 
     private static String getFileBlob(Object vals) {
         return Utils.sha1(vals);
