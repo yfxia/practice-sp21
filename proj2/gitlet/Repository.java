@@ -249,7 +249,7 @@ public class Repository {
         for (String branch : branchList) {
             message(branch.equals(currentBranch) ? "*%s" : "%s", branch);
         }
-        message(""); message("");
+        message("");
 
         message("=== Staged Files ===");
         List<String> stagedFileList = plainFilenamesIn(STAGED_ADD_FOLDER);
@@ -258,7 +258,7 @@ public class Repository {
                 message("%s", fileName);
             }
         }
-        message(""); message("");
+        message("");
 
         message("=== Removed Files ===");
         List<String> removedFileList = plainFilenamesIn(STAGED_RM_FOLDER);
@@ -267,12 +267,12 @@ public class Repository {
                 message("%s", fileName);
             }
         }
-        message(""); message("");
+        message("");
 
         message("=== Modifications Not Staged For Commit ===");
-        message(""); message("");
+        message("");
         message("=== Untracked Files ===");
-        message(""); message("");
+        message("");
     }
 
     public static <T extends Serializable> T fromFile(String fileName,  Class<T> expectedClass) {

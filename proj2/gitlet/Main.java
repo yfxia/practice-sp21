@@ -40,14 +40,11 @@ public class Main {
                 validateNumArgs("rm", args, 2, 2);
                 String rmFileName = args[1];
                 Repository.removeCommit(rmFileName);
-            case "status":
-                validateNumArgs("status", args, 1, 1);
-                break;
             case "log":
                 validateNumArgs("status", args, 1, 1);
                 Repository.checkCommitLog();
                 break;
-            case "status:":
+            case "status":
                 validateNumArgs("status", args, 1, 1);
                 Repository.checkCommitStatus();
                 break;
