@@ -7,8 +7,6 @@ import java.util.TreeMap;
 
 import static gitlet.Utils.*;
 
-// TODO: any imports you need here
-
 /** Represents a gitlet repository.
  *  It contains folder structures that persist commit metadata and various commands
  *  supported by gitlet.
@@ -164,8 +162,11 @@ public class Repository {
         } else if (args[2].equals("--")) {
             String commitId = args[1];
             String fileName = args[3];
-            File file = Utils.join(Commit.OBJECT_FOLDER, commitId.substring(0, 2), commitId.substring(2));
+            File file = Commit.blobPath(commitId);
             if (!file.exists()) throw Utils.error("No commit with that id exists.");
+            /* Takes the version of the file and puts it in CWD, with overwriting access. */
+            Commit commit = Commit.fromObject(commitId);
+            Commit.saveFileContents(fileName, Commit.readFileBlob(commit.getFileIndex().get(fileName)));
         }
     }
 

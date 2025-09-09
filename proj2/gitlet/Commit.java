@@ -4,6 +4,7 @@ import java.io.File;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -12,8 +13,6 @@ import static gitlet.Utils.*;
 
 
 /** Represents a gitlet commit object.
- *  TODO: It's a good idea to give a description here of what else this Class
- *  does at a high level.
  *
  *  @author Sophia Xia
  */
@@ -111,7 +110,11 @@ public class Commit implements Serializable {
             Commit.saveFileBlob(blobId, bytes);
             fileIndex.put(fileName, blobId);
             // The staging area is cleared after a commit.
-            restrictedDelete(fileName);
+            try {
+                Files.delete(file.toPath());
+            } catch (IOException e) {
+                throw error("Could not delete file " + fileName, e);
+            }
         }
         // Apply staged Removals
     }
