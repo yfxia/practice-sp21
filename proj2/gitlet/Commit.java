@@ -13,7 +13,7 @@ import static gitlet.Utils.*;
 
 
 /** Represents a gitlet commit object.
- *
+ *  It encompasses all the properties about a commit object.
  *  @author Sophia Xia
  */
 public class Commit implements Serializable {

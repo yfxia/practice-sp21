@@ -48,10 +48,12 @@ The directory structure looks like this
 ```dtd
 CWD
 ├── .gitlet
-│   ├── staged_add
+│   ├── staged_add                  ----->
 │   ├── staged_rm
 │   ├── objects
-│   └── sentinel
+│   ├── refs/heads/[branch_name]
+│   └── HEAD
+
 ```
 It will:
 1. Create the `.gitlet` folder if it doesn't already exist

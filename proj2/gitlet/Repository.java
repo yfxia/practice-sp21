@@ -3,6 +3,8 @@ package gitlet;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.util.List;
 import java.util.TreeMap;
 
 import static gitlet.Utils.*;
@@ -36,18 +38,16 @@ public class Repository {
      * Set up Gitlet Persistence
      * .gitlet/ -- top level folder for all persistent data
      *     - staged_add -- staging area for files to be added
-     *     - staged_rm -- staging area for files to be removed
      *     - objects -- file-system hashtable
      *     - index -- maps associated with the commits
      */
     public static void setupPersistence() {
         STAGED_ADD_FOLDER.mkdirs();
-        STAGED_RM_FOLDER.mkdirs();
         INDEX_FOLDER.mkdirs();
         try {
             HEAD.createNewFile();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw error("Could not create file ", e);
         }
         REFS.mkdirs();
     }
@@ -93,8 +93,8 @@ public class Repository {
             String stagedBlob = sha1((Object) stagedBytes);
             // If CWD version of the file is identical to the one in current commit, remove it.
             if (blobId.equals(stagedBlob)) {
-                // leverage git rm
-//                Commit.removeACommit(fileName);
+                // leverage gitlet rm
+                Repository.removeCommit(fileName);
                 System.out.println("Identical File already exists.");
             }
         // Otherwise, stage this file for addition and overwrites previous entry if any.
@@ -114,9 +114,8 @@ public class Repository {
             throw error("Please enter a commit message.");
         }
         // Get metadata info from parent commit: commitId, parent commit instance
-        String headRef = getHeadReference();
-        String branch = headRef.substring(headRef.lastIndexOf("/") + 1);
-        String parentCommitId = getBranchReference(branch);
+        String branch = getBranchHead();
+        String parentCommitId = getHeadCommitId();
         Commit parentCommit = Commit.fromObject(parentCommitId);
 
         // Create a new commit instance with metadata and file index map
@@ -126,6 +125,57 @@ public class Repository {
         newCommitInstance.buildFileIndex(parentCommitId);
         String commitId = newCommitInstance.saveCommit();
         setBranchReference(branch, commitId);
+    }
+
+    /**
+     * Utility function to get the current branch at the HEAD pointer.
+     * @return The name of the branch at the HEAD pointer.
+     */
+    private static String getBranchHead() {
+        String headRef = getHeadReference();
+        return  headRef.substring(headRef.lastIndexOf("/") + 1);
+    }
+
+    /***
+     * Utility function to get the commitId sits at the HEAD pointer
+     * @return The commitId at the HEAD pointer
+     */
+    private static String getHeadCommitId() {
+        String branch = getBranchHead();
+        return getBranchReference(branch);
+    }
+
+    /**
+     * Supporting `gitlet rm [file name]
+     * Unstage the file if it is currently staged for addition. If it is tracked in the current commit,
+     * stage it for removal and remove the file from working directory if user has not done so.
+     * @param fileName: user input file name to be removed/unstaged.
+     */
+    public static void removeCommit(String fileName) {
+        // Get the head commit to check is file is currently being tracked
+        String commitId = getHeadCommitId();
+        Commit commit = Commit.fromObject(commitId);
+        File file = join(STAGED_ADD_FOLDER, fileName);
+        /* Failure case: check if the file is neither staged nor tracked by the head commit*/
+        if (!(file.exists()) && commit.getFileIndex().get(fileName) == null) {
+            throw error("No reason to remove the file.");
+        // Unstage the file check
+        } else if(file.exists()){
+            try {
+                Files.delete(file.toPath());
+            } catch (IOException e) {
+                throw error("Could not delete file " + fileName, e);
+            }
+        // If file is tracked in current commit, stage it for removal and remove it from CWD
+        } else {
+            File stagedRmFile = join(CWD, fileName);
+            try {
+                Files.delete(stagedRmFile.toPath());
+                // TODO: update fileIndex map
+            } catch (IOException e) {
+                throw error("Could not delete file " + fileName, e);
+            }
+        }
     }
 
     /**
@@ -146,9 +196,7 @@ public class Repository {
         // Usage 1: checkout -- [file name], takes the version of the file and puts it in CWD.
         } else if (firstArg.equals("--")) {
             String fileName = args[2];
-            String headRef = getHeadReference();
-            String branch = headRef.substring(headRef.lastIndexOf("/") + 1);
-            String parentCommitId = getBranchReference(branch);
+            String parentCommitId = getHeadCommitId();
             Commit parentCommit = Commit.fromObject(parentCommitId);
 
             // Failure case: File should exist in the Current Working Directory.
@@ -171,31 +219,60 @@ public class Repository {
     }
 
     /**
+     * Supporting command gitlet log
      * Display information about each commit backwards until the initial commit.
      * Display commitId, time of commit, commit message.
      */
     public static void checkCommitLog() {
-        String headRef = getHeadReference();
-        String currentBranch = headRef.substring(headRef.lastIndexOf("/") + 1);
-
-        String commitId = getBranchReference(currentBranch);
-
+        String commitId = getHeadCommitId();
         while (commitId != null) {
             Commit commit = Commit.fromObject(commitId);
-
             message("===");
             message("commit %s", commitId);
             message("Date: %s", commit.getDateTime());
             message("%s", commit.getMessage());
             message("");
-
             commitId = commit.getParentId();
-
         }
     }
 
-    public static void removeCommit(String fileName) {
-        File file = Utils.join(Repository.CWD, fileName);
+    /**
+     * Supporting command gitlet status
+     * Display what branch currently exist, and mark the current branch with *.
+     * Also displays what files have been staged for addition or removal.
+     */
+    public static void checkCommitStatus() {
+        message("=== Branches ===");
+        List<String> branchList = plainFilenamesIn(REFS);
+        assert branchList != null;
+        String currentBranch = getBranchHead();
+        for (String branch : branchList) {
+            message(branch.equals(currentBranch) ? "*%s" : "%s", branch);
+        }
+        message(""); message("");
+
+        message("=== Staged Files ===");
+        List<String> stagedFileList = plainFilenamesIn(STAGED_ADD_FOLDER);
+        if (stagedFileList != null) {
+            for (String fileName : stagedFileList) {
+                message("%s", fileName);
+            }
+        }
+        message(""); message("");
+
+        message("=== Removed Files ===");
+        List<String> removedFileList = plainFilenamesIn(STAGED_RM_FOLDER);
+        if (removedFileList != null) {
+            for (String fileName : removedFileList) {
+                message("%s", fileName);
+            }
+        }
+        message(""); message("");
+
+        message("=== Modifications Not Staged For Commit ===");
+        message(""); message("");
+        message("=== Untracked Files ===");
+        message(""); message("");
     }
 
     public static <T extends Serializable> T fromFile(String fileName,  Class<T> expectedClass) {

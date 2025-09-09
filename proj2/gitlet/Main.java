@@ -39,13 +39,17 @@ public class Main {
             case "rm":
                 validateNumArgs("rm", args, 2, 2);
                 String rmFileName = args[1];
-//                Commit.removeCommit(rmFileName);
+                Repository.removeCommit(rmFileName);
             case "status":
                 validateNumArgs("status", args, 1, 1);
                 break;
             case "log":
                 validateNumArgs("status", args, 1, 1);
                 Repository.checkCommitLog();
+                break;
+            case "status:":
+                validateNumArgs("status", args, 1, 1);
+                Repository.checkCommitStatus();
                 break;
             default:
                 Utils.message(String.format("Unknown command: %s", firstArg));
