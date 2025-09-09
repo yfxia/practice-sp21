@@ -43,6 +43,10 @@ public class Main {
             case "status":
                 validateNumArgs("status", args, 1, 1);
                 break;
+            case "log":
+                validateNumArgs("status", args, 1, 1);
+                Repository.checkCommitLog();
+                break;
             default:
                 Utils.message(String.format("Unknown command: %s", firstArg));
         }

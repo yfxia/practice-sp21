@@ -21,13 +21,14 @@ All `Commit` objects are serialized within `OBJECT_FOLDER` which is withint `GIT
 
 #### Instance Variables
 - Message - contains the message of a commit
-- Branch
 - Blob
 - Parent - the parent commit of a commit object
 - Timestamp - time at which a commit was created. Assigned by the constructor
 - CommitIndex - Hashmap stores the hierarchical relationship between commits
     - `key`: commitId - branchName, `value`: parent's commitId
 
+Note:
+- `branch` is not included as an instance variable (real Git doesn't; branches just point to commits)
 
 ### Repository
 This class defers all `Commit` specific logic to `Commit` class.
