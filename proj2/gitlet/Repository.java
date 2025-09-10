@@ -63,6 +63,7 @@ public class Repository {
                 new Commit("initial commit",null, null, null, new TreeMap<>());
         // Includes all metadata and references when hashing a commit
         String commitId = initCommitInstance.saveCommit();
+
         setHeadReference(MASTER);
         setBranchReference(MASTER, commitId);
         initCommitInstance.buildFileIndex(null);

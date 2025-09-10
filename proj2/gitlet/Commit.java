@@ -178,12 +178,12 @@ public class Commit implements Serializable {
      * If already exists, no changes needed. Commit node is immutable.
      * @return String: The commitId being saved to objects/ path.
      */
-    public String saveCommit(){
+    public String saveCommit() {
         commitId = getCommitId();
         File outFile = blobPath(commitId);
         // Once a commit node has been created, can only add new things, not modifying anything existing.
         if (outFile.exists()){
-            throw error("A Gitlet version-control system already exists in the current directory.");
+            error("A Gitlet version-control system already exists in the current directory.");
         }
         outFile.getParentFile().mkdirs();
         writeObject(outFile, this);
