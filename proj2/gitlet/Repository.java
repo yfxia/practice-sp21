@@ -43,6 +43,7 @@ public class Repository {
      */
     public static void setupPersistence() {
         STAGED_ADD_FOLDER.mkdirs();
+        STAGED_RM_FOLDER.mkdirs();
         INDEX_FOLDER.mkdirs();
         try {
             HEAD.createNewFile();
@@ -169,10 +170,12 @@ public class Repository {
             }
         // If file is tracked in current commit, stage it for removal and remove it from CWD
         } else {
-            File stagedRmFile = join(CWD, fileName);
+            File stagedRmFile = join(STAGED_RM_FOLDER, fileName);
             try {
-                Files.delete(stagedRmFile.toPath());
-                // TODO: update fileIndex map
+                stagedRmFile.createNewFile();
+                Files.delete(join(CWD, fileName).toPath());
+                // update fileIndex map to remove the filename key
+                commit.getFileIndex().remove(fileName);
             } catch (IOException e) {
                 throw error("Could not delete file " + fileName, e);
             }

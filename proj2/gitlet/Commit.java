@@ -183,7 +183,7 @@ public class Commit implements Serializable {
         File outFile = blobPath(commitId);
         // Once a commit node has been created, can only add new things, not modifying anything existing.
         if (outFile.exists()){
-            error("A Gitlet version-control system already exists in the current directory.");
+            throw error("A Gitlet version-control system already exists in the current directory.");
         }
         outFile.getParentFile().mkdirs();
         writeObject(outFile, this);
