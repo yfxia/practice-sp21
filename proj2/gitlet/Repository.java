@@ -43,11 +43,15 @@ public class Repository {
      *     - objects -- file-system hashtable
      *     - index -- maps associated with the commits
      */
-    public static void setupPersistence() throws IOException {
+    public static void setupPersistence() {
         STAGED_ADD_FOLDER.mkdirs();
         STAGED_RM_FOLDER.mkdirs();
         INDEX_FOLDER.mkdirs();
-        HEAD.createNewFile();
+        try {
+            HEAD.createNewFile();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         REFS.mkdirs();
     }
 
@@ -76,7 +80,7 @@ public class Repository {
      * being added and lgN, for N the number of files in the commit.
      * @param fileName: The name of the file to be added for commit
      */
-    public static void stageCommit(String fileName) throws IOException {
+    public static void stageCommit(String fileName) {
         // Check if the file exists in the Current Working Directory
         File file = Utils.join(CWD, fileName);
         if (!file.exists()) throw Utils.error("File does not exist.");
@@ -89,7 +93,11 @@ public class Repository {
 
         if (checkIdenticalFileExists(fileName)){
             if (stagedRmFile.exists()) {
-                Files.delete(stagedRmFile.toPath());
+                try {
+                    Files.delete(stagedRmFile.toPath());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         } else {
             writeContents(stagedFile, (Object) bytes);
