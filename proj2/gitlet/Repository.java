@@ -43,15 +43,11 @@ public class Repository {
      *     - objects -- file-system hashtable
      *     - index -- maps associated with the commits
      */
-    public static void setupPersistence() {
+    public static void setupPersistence() throws IOException {
         STAGED_ADD_FOLDER.mkdirs();
         STAGED_RM_FOLDER.mkdirs();
         INDEX_FOLDER.mkdirs();
-        try {
-            HEAD.createNewFile();
-        } catch (IOException e) {
-            throw error("Could not create file ", e);
-        }
+        HEAD.createNewFile();
         REFS.mkdirs();
     }
 
@@ -80,43 +76,47 @@ public class Repository {
      * being added and lgN, for N the number of files in the commit.
      * @param fileName: The name of the file to be added for commit
      */
-    public static void stageCommit(String fileName) {
+    public static void stageCommit(String fileName) throws IOException {
         // Check if the file exists in the Current Working Directory
         File file = Utils.join(CWD, fileName);
         if (!file.exists()) throw Utils.error("File does not exist.");
 
         // create a blob: saved contents of the file.
         byte[] bytes = readContents(file);
-        String blobId = sha1((Object) bytes);
-
-        // Check if the file is tracked by current commit
-        String commitId = getHeadCommitId();
-        Commit commit = Commit.fromObject(commitId);
-
         // Check if the file is staged for addition already
         File stagedFile = Utils.join(STAGED_ADD_FOLDER, fileName);
         File stagedRmFile = Utils.join(STAGED_RM_FOLDER, fileName);
-        if (commit.getFileIndex().containsKey(fileName) ){
-            return;
-        } else if (stagedFile.exists()) {
-            byte[] stagedBytes = readContents(stagedFile);
-            String stagedBlob = sha1((Object) stagedBytes);
-            // If CWD version of the file is identical to the one in current commit, remove it.
-            if (blobId.equals(stagedBlob)) {
-                // leverage gitlet rm
-                Repository.removeCommit(fileName);
-                message("Identical File already exists.");
-            }
-        // Otherwise, stage this file for addition and overwrites previous entry if any.
-        } else if(stagedRmFile.exists()){
-            try {
+
+        if (checkIdenticalFileExists(fileName)){
+            if (stagedRmFile.exists()) {
                 Files.delete(stagedRmFile.toPath());
-            } catch (IOException e) {
-                throw error("Please enter a commit message.");
             }
         } else {
             writeContents(stagedFile, (Object) bytes);
         }
+    }
+
+    private static Boolean checkIdenticalFileExists(String fileName) {
+        File file = Utils.join(CWD, fileName);
+        // create a blob: saved contents of the file.
+        byte[] bytes = readContents(file);
+        String blobId = sha1((Object) bytes);
+
+        // Check if the file is staged for addition already
+        File stagedFile = Utils.join(STAGED_ADD_FOLDER, fileName);
+
+        // Check if the file is tracked by current commit
+        String commitId = getHeadCommitId();
+        Commit commit = Commit.fromObject(commitId);
+        if (commit.getFileIndex().containsKey(fileName) ) {
+            String commitBlobId = commit.getFileIndex().get(fileName);
+            return commitBlobId.equals(blobId);
+        } else if (stagedFile.exists()) {
+            byte[] stagedBytes = readContents(stagedFile);
+            String stagedBlob = sha1((Object) stagedBytes);
+            return blobId.equals(stagedBlob);
+        }
+        return false;
     }
 
     /**
@@ -183,11 +183,7 @@ public class Repository {
             throw error("No reason to remove the file.");
         // Unstage the file check
         } else if(file.exists()){
-            try {
-                Files.delete(file.toPath());
-            } catch (IOException e) {
-                throw error("Could not delete file " + fileName, e);
-            }
+            restrictedDelete(file);
         // If file is tracked in current commit, stage it for removal and remove it from CWD
         } else {
             File stagedRmFile = join(STAGED_RM_FOLDER, fileName);
@@ -277,7 +273,7 @@ public class Repository {
 
         message("=== Staged Files ===");
         List<String> stagedFileList = plainFilenamesIn(STAGED_ADD_FOLDER);
-        if (stagedFileList != null) {
+        if (stagedFileList != null && !stagedFileList.isEmpty()) {
             for (String fileName : stagedFileList) {
                 message("%s", fileName);
             }
@@ -286,7 +282,7 @@ public class Repository {
 
         message("=== Removed Files ===");
         List<String> removedFileList = plainFilenamesIn(STAGED_RM_FOLDER);
-        if (removedFileList != null) {
+        if (removedFileList != null && !removedFileList.isEmpty()) {
             for (String fileName : removedFileList) {
                 message("%s", fileName);
             }
