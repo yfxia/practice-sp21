@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.TreeMap;
 
 import static gitlet.Utils.*;
@@ -87,19 +89,31 @@ public class Repository {
         byte[] bytes = readContents(file);
         String blobId = sha1((Object) bytes);
 
+        // Check if the file is tracked by current commit
+        String commitId = getHeadCommitId();
+        Commit commit = Commit.fromObject(commitId);
 
         // Check if the file is staged for addition already
         File stagedFile = Utils.join(STAGED_ADD_FOLDER, fileName);
-        if (stagedFile.exists()) {
+        File stagedRmFile = Utils.join(STAGED_RM_FOLDER, fileName);
+        if (commit.getFileIndex().containsKey(fileName) ){
+            return;
+        } else if (stagedFile.exists()) {
             byte[] stagedBytes = readContents(stagedFile);
             String stagedBlob = sha1((Object) stagedBytes);
             // If CWD version of the file is identical to the one in current commit, remove it.
             if (blobId.equals(stagedBlob)) {
                 // leverage gitlet rm
                 Repository.removeCommit(fileName);
-                System.out.println("Identical File already exists.");
+                message("Identical File already exists.");
             }
         // Otherwise, stage this file for addition and overwrites previous entry if any.
+        } else if(stagedRmFile.exists()){
+            try {
+                Files.delete(stagedRmFile.toPath());
+            } catch (IOException e) {
+                throw error("Please enter a commit message.");
+            }
         } else {
             writeContents(stagedFile, (Object) bytes);
         }
@@ -112,8 +126,14 @@ public class Repository {
      */
     public static void createCommit(String message) {
         // Failure case: user input message cannot be null
-        if (message == null){
+        if (message == null || message.isEmpty()) {
             throw error("Please enter a commit message.");
+        }
+        File stagedFile = join(STAGED_ADD_FOLDER);
+        List<String> names = plainFilenamesIn(stagedFile);
+
+        if (names == null || names.isEmpty()){
+            throw error("No changes added to the commit.");
         }
         // Get metadata info from parent commit: commitId, parent commit instance
         String branch = getBranchHead();
