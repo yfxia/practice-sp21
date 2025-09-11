@@ -191,8 +191,12 @@ public class Repository {
             throw error("No reason to remove the file.");
         // Unstage the file check
         } else if(file.exists()){
-            restrictedDelete(file);
-        // If file is tracked in current commit, stage it for removal and remove it from CWD
+            try {
+                Files.delete(file.toPath());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            // If file is tracked in current commit, stage it for removal and remove it from CWD
         } else {
             File stagedRmFile = join(STAGED_RM_FOLDER, fileName);
             try {
