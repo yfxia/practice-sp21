@@ -99,24 +99,29 @@ public class Commit implements Serializable {
 
         // Check staged additions
         List<String> adds = plainFilenamesIn(Repository.STAGED_ADD_FOLDER);
-        if (adds == null) {
+        List<String> removal = plainFilenamesIn(Repository.STAGED_RM_FOLDER);
+
+        if (adds == null & removal == null) {
             // Failure case 1: If no files have been staged, abort.
             throw error("No changes added to the commit.");
-        }
-        for (String fileName : adds) {
-            File file = join(Repository.STAGED_ADD_FOLDER, fileName);
-            byte[] bytes = readContents(file);
-            String blobId = sha1((Object) bytes);
-            Commit.saveFileBlob(blobId, bytes);
-            fileIndex.put(fileName, blobId);
-            // The staging area is cleared after a commit.
-            try {
-                Files.delete(file.toPath());
-            } catch (IOException e) {
-                throw error("Could not delete file " + fileName, e);
+        } else if (adds != null && !adds.isEmpty()) {
+            for (String fileName : adds) {
+                File file = join(Repository.STAGED_ADD_FOLDER, fileName);
+                byte[] bytes = readContents(file);
+                String blobId = sha1((Object) bytes);
+                Commit.saveFileBlob(blobId, bytes);
+                fileIndex.put(fileName, blobId);
+                Repository.deleteIfExists(file);
+            }
+        // Apply staged Removals
+        } else if (removal != null && !removal.isEmpty()) {
+            removal.forEach(fileIndex::remove);
+            for (String fileName : removal) {
+                File file = join(Repository.STAGED_RM_FOLDER, fileName);
+                Repository.deleteIfExists(file);
             }
         }
-        // Apply staged Removals
+
     }
 
     /** Lazy-load parent by ID (cache in transient field)*/

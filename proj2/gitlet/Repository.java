@@ -47,11 +47,7 @@ public class Repository {
         STAGED_ADD_FOLDER.mkdirs();
         STAGED_RM_FOLDER.mkdirs();
         INDEX_FOLDER.mkdirs();
-        try {
-            HEAD.createNewFile();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        createNewFile(HEAD);
         REFS.mkdirs();
     }
 
@@ -92,13 +88,7 @@ public class Repository {
         File stagedRmFile = Utils.join(STAGED_RM_FOLDER, fileName);
 
         if (checkIdenticalFileExists(fileName)){
-            if (stagedRmFile.exists()) {
-                try {
-                    Files.delete(stagedRmFile.toPath());
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
+            deleteIfExists(stagedRmFile);
         } else {
             writeContents(stagedFile, (Object) bytes);
         }
@@ -137,10 +127,10 @@ public class Repository {
         if (message == null || message.isEmpty()) {
             throw error("Please enter a commit message.");
         }
-        File stagedFile = join(STAGED_ADD_FOLDER);
-        List<String> names = plainFilenamesIn(stagedFile);
+        List<String> names = plainFilenamesIn(STAGED_ADD_FOLDER);
+        List<String> namesRm = plainFilenamesIn(STAGED_RM_FOLDER);
 
-        if (names == null || names.isEmpty()){
+        if ((names == null || names.isEmpty())  && (namesRm == null || namesRm.isEmpty())) {
             throw error("No changes added to the commit.");
         }
         // Get metadata info from parent commit: commitId, parent commit instance
@@ -189,24 +179,14 @@ public class Repository {
         /* Failure case: check if the file is neither staged nor tracked by the head commit*/
         if (!(file.exists()) && commit.getFileIndex().get(fileName) == null) {
             throw error("No reason to remove the file.");
-        // Unstage the file check
+            // Unstage the file check
         } else if(file.exists()){
-            try {
-                Files.delete(file.toPath());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            deleteIfExists(file);
             // If file is tracked in current commit, stage it for removal and remove it from CWD
         } else {
             File stagedRmFile = join(STAGED_RM_FOLDER, fileName);
-            try {
-                stagedRmFile.createNewFile();
-                Files.delete(join(CWD, fileName).toPath());
-                // update fileIndex map to remove the filename key
-                commit.getFileIndex().remove(fileName);
-            } catch (IOException e) {
-                throw error("Could not delete file " + fileName, e);
-            }
+            createNewFile(stagedRmFile);
+            restrictedDelete(fileName);
         }
     }
 
@@ -319,11 +299,7 @@ public class Repository {
      */
     public static void setBranchReference(String branch, String commitId) {
         File branchFile = Utils.join(REFS, branch);
-        try {
-            branchFile.createNewFile();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        createNewFile(branchFile);
         writeContents(branchFile, commitId);
     }
 
@@ -355,6 +331,22 @@ public class Repository {
     public static String getHeadReference() {
         File headFile = Utils.join(HEAD);
         return readContentsAsString(headFile);
+    }
+
+    public static void deleteIfExists(File file) {
+        try {
+            Files.deleteIfExists(file.toPath());
+        } catch (IOException e) {
+            throw error("Could not delete file " + file.toPath(), e);
+        }
+    }
+
+    private static void createNewFile(File file) {
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            throw error("Could not create file " + file.toPath(), e);
+        }
     }
 
 }
