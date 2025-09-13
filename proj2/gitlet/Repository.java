@@ -148,26 +148,8 @@ public class Repository {
     }
 
     /**
-     * Utility function to get the current branch at the HEAD pointer.
-     * @return The name of the branch at the HEAD pointer.
-     */
-    private static String getBranchHead() {
-        String headRef = getHeadReference();
-        return  headRef.substring(headRef.lastIndexOf("/") + 1);
-    }
-
-    /***
-     * Utility function to get the commitId sits at the HEAD pointer
-     * @return The commitId at the HEAD pointer
-     */
-    private static String getHeadCommitId() {
-        String branch = getBranchHead();
-        return getBranchReference(branch);
-    }
-
-    /**
      * Supporting `gitlet rm [file name]
-     * Unstage the file if it is currently staged for addition. If it is tracked in the current commit,
+     * Unstage the file if it is currently staged for addition. If tracked in the current commit,
      * stage it for removal and remove the file from working directory if user has not done so.
      * @param fileName: user input file name to be removed/unstaged.
      */
@@ -269,7 +251,6 @@ public class Repository {
             message(branch.equals(currentBranch) ? "*%s" : "%s", branch);
         }
         message("");
-
         message("=== Staged Files ===");
         List<String> stagedFileList = plainFilenamesIn(STAGED_ADD_FOLDER);
         if (stagedFileList != null && !stagedFileList.isEmpty()) {
@@ -278,7 +259,6 @@ public class Repository {
             }
         }
         message("");
-
         message("=== Removed Files ===");
         List<String> removedFileList = plainFilenamesIn(STAGED_RM_FOLDER);
         if (removedFileList != null && !removedFileList.isEmpty()) {
@@ -287,16 +267,10 @@ public class Repository {
             }
         }
         message("");
-
         message("=== Modifications Not Staged For Commit ===");
         message("");
         message("=== Untracked Files ===");
         message("");
-    }
-
-    public static<T extends Serializable> T fromFile(String fileName, Class<T> expectedClass) {
-        File file = join(INDEX_FOLDER, fileName);
-        return readObject(file, expectedClass);
     }
 
     /**
@@ -346,6 +320,24 @@ public class Repository {
         } catch (IOException e) {
             throw error("Could not delete file " + file.toPath(), e);
         }
+    }
+
+    /**
+     * Utility function to get the current branch at the HEAD pointer.
+     * @return The name of the branch at the HEAD pointer.
+     */
+    private static String getBranchHead() {
+        String headRef = getHeadReference();
+        return  headRef.substring(headRef.lastIndexOf("/") + 1);
+    }
+
+    /***
+     * Utility function to get the commitId sits at the HEAD pointer
+     * @return The commitId at the HEAD pointer
+     */
+    private static String getHeadCommitId() {
+        String branch = getBranchHead();
+        return getBranchReference(branch);
     }
 
     private static void createNewFile(File file) {
