@@ -2,9 +2,7 @@ package gitlet;
 
 import java.io.File;
 
-import java.io.IOException;
 import java.io.Serializable;
-import java.nio.file.Files;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -24,7 +22,7 @@ public class Commit implements Serializable {
     static final File OBJECT_FOLDER = join(Repository.GITLET_DIR, "objects");
 
     static File blobPath(String id) {
-        return join(OBJECT_FOLDER, id.substring(0,2), id.substring(2));
+        return join(OBJECT_FOLDER, id.substring(0, 2), id.substring(2));
     }
 
     // Persisted fields (written to disk)
@@ -60,7 +58,7 @@ public class Commit implements Serializable {
                   String parentId,
                   Commit parent,
                   String secondParentId,
-                  TreeMap<String,String> snapshot) {
+                  TreeMap<String, String> snapshot) {
         this.message = message;
         this.parentId = parentId;
         this.secondParentId = secondParentId;
@@ -75,12 +73,27 @@ public class Commit implements Serializable {
      */
     private String computeCommitId() {
         List<Object> parts = new java.util.ArrayList<>();
-        parts.add("message:"); parts.add(message); parts.add("\n");
-        parts.add("time:"); parts.add(getTime()); parts.add("\n");
-        if (parentId != null) { parts.add("parent:"); parts.add(parentId); parts.add("\n"); }
-        if (secondParentId != null) { parts.add("secondParent:"); parts.add(secondParentId); parts.add("\n"); }
-        fileIndex.forEach((fileName,blob)->{
-            parts.add(fileName); parts.add("\0"); parts.add(blob); parts.add("\n");
+        parts.add("message:");
+        parts.add(message);
+        parts.add("\n");
+        parts.add("time:");
+        parts.add(getTime());
+        parts.add("\n");
+        if (parentId != null) {
+            parts.add("parent:");
+            parts.add(parentId);
+            parts.add("\n");
+        }
+        if (secondParentId != null) {
+            parts.add("secondParent:");
+            parts.add(secondParentId);
+            parts.add("\n");
+        }
+        fileIndex.forEach((fileName, blob) -> {
+            parts.add(fileName);
+            parts.add("\0");
+            parts.add(blob);
+            parts.add("\n");
         });
         return sha1(parts);
     }
@@ -92,10 +105,13 @@ public class Commit implements Serializable {
     /**
      * Build fileIndex included for this commit from snapshot +/- staged files
      */
-    public void buildFileIndex(String parentId) {
+    public void buildFileIndex() {
         // start from parent snapshot
-        if (parentId == null) fileIndex.clear();
-        else fileIndex = new TreeMap<>(Commit.fromObject(parentId).getFileIndex());
+        if (parentId == null) {
+            fileIndex.clear();
+        } else {
+            fileIndex = new TreeMap<>(Commit.fromObject(parentId).getFileIndex());
+        }
 
         // Check staged additions
         List<String> adds = plainFilenamesIn(Repository.STAGED_ADD_FOLDER);
@@ -187,7 +203,7 @@ public class Commit implements Serializable {
         commitId = getCommitId();
         File outFile = blobPath(commitId);
         // Once a commit node has been created, can only add new things, not modifying anything existing.
-        if (outFile.exists()){
+        if (outFile.exists()) {
             throw error("A Gitlet version-control system already exists in the current directory.");
         }
         outFile.getParentFile().mkdirs();
@@ -209,7 +225,7 @@ public class Commit implements Serializable {
      */
     public String getDateTime() {
         DateTimeFormatter f = DateTimeFormatter.ofPattern("EEE MMM d HH:mm:ss yyyy Z", Locale.US);
-        return Instant.ofEpochMilli(timestamp) .atZone(ZoneId.systemDefault()).format(f);
+        return Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault()).format(f);
     }
 
     private String getCommitId() {

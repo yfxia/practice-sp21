@@ -4,9 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.TreeMap;
 
 import static gitlet.Utils.*;
@@ -59,13 +57,13 @@ public class Repository {
     public Repository() {
         // Initialize a brand-new commit
         Commit initCommitInstance =
-                new Commit("initial commit",null, null, null, new TreeMap<>());
+                new Commit("initial commit", null, null, null, new TreeMap<>());
         // Includes all metadata and references when hashing a commit
         String commitId = initCommitInstance.saveCommit();
 
         setHeadReference(MASTER);
         setBranchReference(MASTER, commitId);
-        initCommitInstance.buildFileIndex(null);
+        initCommitInstance.buildFileIndex();
     }
 
     /**
@@ -79,7 +77,9 @@ public class Repository {
     public static void stageCommit(String fileName) {
         // Check if the file exists in the Current Working Directory
         File file = Utils.join(CWD, fileName);
-        if (!file.exists()) throw Utils.error("File does not exist.");
+        if (!file.exists()) {
+            throw Utils.error("File does not exist.");
+        }
 
         // create a blob: saved contents of the file.
         byte[] bytes = readContents(file);
@@ -87,7 +87,7 @@ public class Repository {
         File stagedFile = Utils.join(STAGED_ADD_FOLDER, fileName);
         File stagedRmFile = Utils.join(STAGED_RM_FOLDER, fileName);
 
-        if (checkIdenticalFileExists(fileName)){
+        if (checkIdenticalFileExists(fileName)) {
             deleteIfExists(stagedRmFile);
         } else {
             writeContents(stagedFile, (Object) bytes);
@@ -106,7 +106,7 @@ public class Repository {
         // Check if the file is tracked by current commit
         String commitId = getHeadCommitId();
         Commit commit = Commit.fromObject(commitId);
-        if (commit.getFileIndex().containsKey(fileName) ) {
+        if (commit.getFileIndex().containsKey(fileName)) {
             String commitBlobId = commit.getFileIndex().get(fileName);
             return commitBlobId.equals(blobId);
         } else if (stagedFile.exists()) {
@@ -142,7 +142,7 @@ public class Repository {
         Commit newCommitInstance =
                 new Commit(message, parentCommitId, parentCommit, null, parentCommit.getFileIndex());
 
-        newCommitInstance.buildFileIndex(parentCommitId);
+        newCommitInstance.buildFileIndex();
         String commitId = newCommitInstance.saveCommit();
         setBranchReference(branch, commitId);
     }
@@ -180,7 +180,7 @@ public class Repository {
         if (!(file.exists()) && commit.getFileIndex().get(fileName) == null) {
             throw error("No reason to remove the file.");
             // Unstage the file check
-        } else if(file.exists()){
+        } else if (file.exists()) {
             deleteIfExists(file);
             // If file is tracked in current commit, stage it for removal and remove it from CWD
         } else {
@@ -198,9 +198,11 @@ public class Repository {
     public static void checkOutCommit(String[] args) {
         String firstArg = args[1];
         // Usage 3: checkout [branch name], take all files at the head of the given branch.
-        if (args.length == 2){
+        if (args.length == 2) {
             File file = Utils.join(REFS, firstArg);
-            if (!file.exists()) throw Utils.error("No such branch exists.");
+            if (!file.exists()) {
+                throw Utils.error("No such branch exists.");
+            }
             String headRef = getHeadReference();
             if (headRef.equals(file.getName())) {
                 message("No need to checkout the current branch.");
@@ -213,7 +215,9 @@ public class Repository {
 
             // Failure case: File should exist in the Current Working Directory.
             File file = Commit.blobPath(parentCommitId);
-            if (!file.exists()) throw Utils.error("File does not exist in that commit.");
+            if (!file.exists()) {
+                throw Utils.error("File does not exist in that commit.");
+            }
             // Can this be cached?
             String blob = parentCommit.getFileIndex().get(fileName);
             Commit.saveFileContents(fileName, Commit.readFileBlob(blob));
@@ -223,7 +227,9 @@ public class Repository {
             String commitId = args[1];
             String fileName = args[3];
             File file = Commit.blobPath(commitId);
-            if (!file.exists()) throw Utils.error("No commit with that id exists.");
+            if (!file.exists()) {
+                throw Utils.error("No commit with that id exists.");
+            }
             /* Takes the version of the file and puts it in CWD, with overwriting access. */
             Commit commit = Commit.fromObject(commitId);
             Commit.saveFileContents(fileName, Commit.readFileBlob(commit.getFileIndex().get(fileName)));
@@ -287,7 +293,7 @@ public class Repository {
         message("");
     }
 
-    public static <T extends Serializable> T fromFile(String fileName,  Class<T> expectedClass) {
+    public static <T extends Serializable> T fromFile(String fileName, Class <T> expectedClass) {
         File file = join(INDEX_FOLDER, fileName);
         return readObject(file, expectedClass);
     }
@@ -318,7 +324,7 @@ public class Repository {
      * It till put the branch path at .gitlet/refs/heads/branchName file
      * @param branch: name of the branch
      */
-    public static void setHeadReference(String branch){
+    public static void setHeadReference(String branch) {
         File headFile = Utils.join(HEAD);
         String headFileContent = "refs/heads/" + branch;
         writeContents(headFile, headFileContent);
