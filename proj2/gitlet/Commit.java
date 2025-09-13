@@ -15,8 +15,6 @@ import static gitlet.Utils.*;
  *  @author Sophia Xia
  */
 public class Commit implements Serializable {
-    /** serialVersionUID is a long that the JVM writes alongside each serialized object. */
-    private static final long serialVersionUID = 1L;
 
     /** Folder that commits located at*/
     static final File OBJECT_FOLDER = join(Repository.GITLET_DIR, "objects");
@@ -24,6 +22,9 @@ public class Commit implements Serializable {
     static File blobPath(String id) {
         return join(OBJECT_FOLDER, id.substring(0, 2), id.substring(2));
     }
+
+    /** serialVersionUID is a long that the JVM writes alongside each serialized object. */
+    private static final long serialVersionUID = 1L;
 
     // Persisted fields (written to disk)
     /** The message of this Commit.*/
@@ -38,15 +39,17 @@ public class Commit implements Serializable {
     /** The second parent commitId, null unless merge. */
     private final String secondParentId;
 
+    /** The commitId associated with the current commit. */
     private String commitId;
-
-    // Runtime-only pointers (NOT written to disk)
-    private transient Commit parent;
-    // Optional runtime pointer.
-    private transient Commit secondParent;
 
     /** File Name --> blobId (sorted) */
     private TreeMap<String, String> fileIndex;
+
+    // Runtime-only pointers (NOT written to disk)
+    private transient Commit parent;
+
+    // Optional runtime pointer.
+    private transient Commit secondParent;
 
 
     /***
@@ -95,7 +98,7 @@ public class Commit implements Serializable {
             parts.add(blob);
             parts.add("\n");
         });
-        return sha1(parts);
+        return sha1(parts.toArray());
     }
 
     public TreeMap<String, String> getFileIndex() {
@@ -113,13 +116,15 @@ public class Commit implements Serializable {
             fileIndex = new TreeMap<>(Commit.fromObject(parentId).getFileIndex());
         }
 
-        // Check staged additions
+        // Check staged additions & removals
         List<String> adds = plainFilenamesIn(Repository.STAGED_ADD_FOLDER);
         List<String> removal = plainFilenamesIn(Repository.STAGED_RM_FOLDER);
 
+        // Failure case: If no files have been staged, abort.
         if (adds == null & removal == null) {
-            // Failure case 1: If no files have been staged, abort.
             throw error("No changes added to the commit.");
+
+        // Check if there's any files staged for additions
         } else if (adds != null && !adds.isEmpty()) {
             for (String fileName : adds) {
                 File file = join(Repository.STAGED_ADD_FOLDER, fileName);
@@ -129,7 +134,7 @@ public class Commit implements Serializable {
                 fileIndex.put(fileName, blobId);
                 Repository.deleteIfExists(file);
             }
-        // Apply staged Removals
+        // Check if there's any files staged for removal
         } else if (removal != null && !removal.isEmpty()) {
             removal.forEach(fileIndex::remove);
             for (String fileName : removal) {
@@ -137,7 +142,6 @@ public class Commit implements Serializable {
                 Repository.deleteIfExists(file);
             }
         }
-
     }
 
     /** Lazy-load parent by ID (cache in transient field)*/
@@ -148,6 +152,7 @@ public class Commit implements Serializable {
         return this.parent;
     }
 
+    /** Get parent commit id*/
     public String getParentId() {
         return this.parentId;
     }

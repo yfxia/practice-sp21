@@ -43,6 +43,10 @@ public class Main {
                     validateNumArgs("log", args, 1, 1);
                     Repository.checkCommitLog();
                     break;
+                case "global-log":
+                    validateNumArgs("global-log", args, 1, 1);
+                    Repository.checkCommitGlobalLog();
+                    break;
                 case "status":
                     validateNumArgs("status", args, 1, 1);
                     Repository.checkCommitStatus();

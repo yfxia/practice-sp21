@@ -225,14 +225,19 @@ public class Repository {
      */
     public static void checkCommitLog() {
         String commitId = getHeadCommitId();
-        while (commitId != null) {
-            Commit commit = Commit.fromObject(commitId);
-            message("===");
-            message("commit %s", commitId);
-            message("Date: %s", commit.getDateTime());
-            message("%s", commit.getMessage());
-            message("");
-            commitId = commit.getParentId();
+        displayCommitLog(commitId);
+    }
+
+    /**
+     * Supporting command gitlet global-log
+     * Display information about all commits ever made. Order does not matter.
+     */
+    public static void checkCommitGlobalLog() {
+        List<String> branchList = plainFilenamesIn(REFS);
+        assert branchList != null;
+        for (String branch : branchList) {
+            String commitId = getBranchReference(branch);
+            displayCommitLog(commitId);
         }
     }
 
@@ -313,6 +318,10 @@ public class Repository {
         return readContentsAsString(headFile);
     }
 
+    /**
+     * Utility function to delete an existing file.
+     * @param file: File object that contains path information.
+     */
     public static void deleteIfExists(File file) {
         try {
             Files.deleteIfExists(file.toPath());
@@ -339,6 +348,26 @@ public class Repository {
         return getBranchReference(branch);
     }
 
+    /**
+     * Utility function that takes in a commitId and display its information.
+     * @param commitId: commitId ever exists.
+     */
+    private static void displayCommitLog(String commitId) {
+        while (commitId != null) {
+            Commit commit = Commit.fromObject(commitId);
+            message("===");
+            message("commit %s", commitId);
+            message("Date: %s", commit.getDateTime());
+            message("%s", commit.getMessage());
+            message("");
+            commitId = commit.getParentId();
+        }
+    }
+
+    /**
+     * Utility function that creates a new file.
+     * @param file: File object contains path information.
+     */
     private static void createNewFile(File file) {
         try {
             file.createNewFile();
