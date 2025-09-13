@@ -135,16 +135,16 @@ public class Repository {
         }
         // Get metadata info from parent commit: commitId, parent commit instance
         String branch = getBranchHead();
-        String parentCommitId = getHeadCommitId();
-        Commit parentCommit = Commit.fromObject(parentCommitId);
+        String commitId = getHeadCommitId();
+        Commit commit = Commit.fromObject(commitId);
 
         // Create a new commit instance with metadata and file index map
         Commit newCommitInstance =
-                new Commit(message, parentCommitId, parentCommit, null, parentCommit.getFileIndex());
+                new Commit(message, commitId, commit, null, commit.getFileIndex());
 
         newCommitInstance.buildFileIndex();
-        String commitId = newCommitInstance.saveCommit();
-        setBranchReference(branch, commitId);
+        String newCommitId = newCommitInstance.saveCommit();
+        setBranchReference(branch, newCommitId);
     }
 
     /**
@@ -222,7 +222,7 @@ public class Repository {
             String blob = parentCommit.getFileIndex().get(fileName);
             Commit.saveFileContents(fileName, Commit.readFileBlob(blob));
 
-        // Usage 2: checkout [commit id] -- [file name], takes the commit version and puts it in CWD.
+        // Usage 2: checkout [commit id] -- [file name], puts it in CWD.
         } else if (args[2].equals("--")) {
             String commitId = args[1];
             String fileName = args[3];
@@ -232,7 +232,8 @@ public class Repository {
             }
             /* Takes the version of the file and puts it in CWD, with overwriting access. */
             Commit commit = Commit.fromObject(commitId);
-            Commit.saveFileContents(fileName, Commit.readFileBlob(commit.getFileIndex().get(fileName)));
+            Commit.saveFileContents(fileName,
+                    Commit.readFileBlob(commit.getFileIndex().get(fileName)));
         }
     }
 
@@ -293,7 +294,7 @@ public class Repository {
         message("");
     }
 
-    public static <T extends Serializable> T fromFile(String fileName, Class <T> expectedClass) {
+    public static<T extends Serializable> T fromFile(String fileName, Class<T> expectedClass) {
         File file = join(INDEX_FOLDER, fileName);
         return readObject(file, expectedClass);
     }
