@@ -25,6 +25,11 @@ public class Main {
                     String addFileName = args[1];
                     Repository.stageCommit(addFileName);
                     break;
+                case "branch":
+                    validateNumArgs("branch", args, 2, 2);
+                    String branchName = args[1];
+                    Repository.createNewBranch(branchName);
+                    break;
                 case "commit":
                     validateNumArgs("commit", args, 2, 2);
                     String commitFileName = args[1];

@@ -40,6 +40,16 @@ This class defers all `Commit` specific logic to `Commit` class.
 - master - master branch of gitlet repository
 - HEAD - the head pointer
 
+## Utility Functions
+- getBranchHead(): get the branch name at the HEAD pointer
+- getHeadReference(): path of the HEAD reference, i.e. refs/heads/branchName
+- 
+- getHeadCommitId(): the commitId at the head pointer
+- getBranchReference(): the commitId lives at top of the branch
+- 
+- setBranchReference():
+- setHeadReference()
+
 
 ## Algorithms
 

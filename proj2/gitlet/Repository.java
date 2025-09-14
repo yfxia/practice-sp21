@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeMap;
 
 import static gitlet.Utils.*;
@@ -79,7 +80,6 @@ public class Repository {
         if (!file.exists()) {
             throw Utils.error("File does not exist.");
         }
-
         // create a blob: saved contents of the file.
         byte[] bytes = readContents(file);
         // Check if the file is staged for addition already
@@ -93,28 +93,7 @@ public class Repository {
         }
     }
 
-    private static Boolean checkIdenticalFileExists(String fileName) {
-        File file = Utils.join(CWD, fileName);
-        // create a blob: saved contents of the file.
-        byte[] bytes = readContents(file);
-        String blobId = sha1((Object) bytes);
 
-        // Check if the file is staged for addition already
-        File stagedFile = Utils.join(STAGED_ADD_FOLDER, fileName);
-
-        // Check if the file is tracked by current commit
-        String commitId = getHeadCommitId();
-        Commit commit = Commit.fromObject(commitId);
-        if (commit.getFileIndex().containsKey(fileName)) {
-            String commitBlobId = commit.getFileIndex().get(fileName);
-            return commitBlobId.equals(blobId);
-        } else if (stagedFile.exists()) {
-            byte[] stagedBytes = readContents(stagedFile);
-            String stagedBlob = sha1((Object) stagedBytes);
-            return blobId.equals(stagedBlob);
-        }
-        return false;
-    }
 
     /**
      * Supporting `gitlet commit` command.
@@ -172,6 +151,22 @@ public class Repository {
     }
 
     /**
+     * Supporting `gitlet branch [branch name]` command.
+     * Creates a new branch with the given name, and points it at the current head commit.
+     * It does NOT immediately switch to the newly created branch, before HEAD should be at "master".
+     * @param branchName: user-input the name of branch to be created.
+     */
+    public static void createNewBranch(String branchName) {
+        File file = join(REFS, branchName);
+        if (file.exists()) {
+            throw error("A branch with that name already exists.");
+        }
+        String commitId = getHeadCommitId();
+        // Set the given branch pointer to the current head commit.
+        setBranchReference(branchName, commitId);
+    }
+
+    /**
      * Support `gitlet checkout` command.
      * Checking out to an existing snapshot of the Repository.
      * @param args: User-input list of String arguments
@@ -180,14 +175,17 @@ public class Repository {
         String firstArg = args[1];
         // Usage 3: checkout [branch name], take all files at the head of the given branch.
         if (args.length == 2) {
-            File file = Utils.join(REFS, firstArg);
+            File file = join(REFS, firstArg);
             if (!file.exists()) {
                 throw Utils.error("No such branch exists.");
             }
-            String headRef = getHeadReference();
-            if (headRef.equals(file.getName())) {
+            String head = getBranchHead();
+            if (head.equals(file.getName())) {
                 message("No need to checkout the current branch.");
             }
+            // Set the HEAD pointer to the branch.
+            setHeadReference(firstArg);
+            restoreCommitStatus(getHeadCommitId());
         // Usage 1: checkout -- [file name], takes the version of the file and puts it in CWD.
         } else if (firstArg.equals("--")) {
             String fileName = args[2];
@@ -215,6 +213,32 @@ public class Repository {
             Commit commit = Commit.fromObject(commitId);
             Commit.saveFileContents(fileName,
                     Commit.readFileBlob(commit.getFileIndex().get(fileName)));
+        }
+    }
+
+    /**
+     * Utility function to travel back in time to restore Repository file system exactly
+     * at the time the given commitId was created.
+     * @param commitId: user-input commitId to be restored to.
+     */
+    private static void restoreCommitStatus(String commitId) {
+        Commit commit = Commit.fromObject(commitId);
+        Set<String> trackedFiles = commit.getFileIndex().keySet();
+        List<String> currentFiles = plainFilenamesIn(CWD);
+        // Remove files not being tracked
+        if (currentFiles != null && !currentFiles.isEmpty()) {
+            for (String fileName : currentFiles) {
+                // Delete this from CWD if not being tracked
+                if (!trackedFiles.contains(fileName)) {
+                    File file = join(CWD, fileName);
+                    deleteIfExists(file);
+                }
+            }
+        }
+        // Create files being tracked
+        for (String name : trackedFiles) {
+            String blobId = commit.getFileIndex().get(name);
+            Commit.saveFileContents(name, Commit.readFileBlob(blobId));
         }
     }
 
@@ -289,24 +313,13 @@ public class Repository {
     }
 
     /**
-     * Get the commitId that lives on top of the branch.
-     * @param branch: name of the branch.
-     * @return String: commitId.
-     */
-    public static String getBranchReference(String branch) {
-        File branchFile = Utils.join(REFS, branch);
-        return readContentsAsString(branchFile);
-    }
-
-    /**
      * Set HEAD pointer for this commit, at the given branch.
      * It till put the branch path at .gitlet/refs/heads/branchName file
      * @param branch: name of the branch
      */
     public static void setHeadReference(String branch) {
         File headFile = Utils.join(HEAD);
-        String headFileContent = "refs/heads/" + branch;
-        writeContents(headFile, headFileContent);
+        writeContents(headFile, "refs/heads/", branch);
     }
 
     /**
@@ -316,18 +329,6 @@ public class Repository {
     public static String getHeadReference() {
         File headFile = Utils.join(HEAD);
         return readContentsAsString(headFile);
-    }
-
-    /**
-     * Utility function to delete an existing file.
-     * @param file: File object that contains path information.
-     */
-    public static void deleteIfExists(File file) {
-        try {
-            Files.deleteIfExists(file.toPath());
-        } catch (IOException e) {
-            throw error("Could not delete file " + file.toPath(), e);
-        }
     }
 
     /**
@@ -347,6 +348,58 @@ public class Repository {
         String branch = getBranchHead();
         return getBranchReference(branch);
     }
+
+    /**
+     * Get the commitId that lives on top of the branch.
+     * @param branch: name of the branch.
+     * @return String: commitId.
+     */
+    public static String getBranchReference(String branch) {
+        File branchFile = Utils.join(REFS, branch);
+        return readContentsAsString(branchFile);
+    }
+
+    /**
+     * Utility function to delete an existing file.
+     * @param file: File object that contains path information.
+     */
+    public static void deleteIfExists(File file) {
+        try {
+            Files.deleteIfExists(file.toPath());
+        } catch (IOException e) {
+            throw error("Could not delete file " + file.toPath(), e);
+        }
+    }
+
+    /**
+     * Check if identical file exists in staging area to be added.
+     * @param fileName: name of the file
+     * @return: Boolean True exists / False not exists.
+     */
+    private static Boolean checkIdenticalFileExists(String fileName) {
+        File file = Utils.join(CWD, fileName);
+        // create a blob: saved contents of the file.
+        byte[] bytes = readContents(file);
+        String blobId = sha1((Object) bytes);
+        File stagedFile = Utils.join(STAGED_ADD_FOLDER, fileName);
+
+        String commitId = getHeadCommitId();
+        Commit commit = Commit.fromObject(commitId);
+        // Case 1: Check if the file is tracked by current commit
+        if (commit.getFileIndex().containsKey(fileName)) {
+            String commitBlobId = commit.getFileIndex().get(fileName);
+            return commitBlobId.equals(blobId);
+        // Case 2: Check if the file is staged for addition already
+        } else if (stagedFile.exists()) {
+            byte[] stagedBytes = readContents(stagedFile);
+            String stagedBlob = sha1((Object) stagedBytes);
+            return blobId.equals(stagedBlob);
+        }
+        // Case 3: neither above, return false.
+        return false;
+    }
+
+
 
     /**
      * Utility function that takes in a commitId and display its information.
