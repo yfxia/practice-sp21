@@ -57,6 +57,11 @@ public class Main {
                     validateNumArgs("global-log", args, 1, 1);
                     Repository.checkCommitGlobalLog();
                     break;
+                case "reset":
+                    validateNumArgs("reset", args, 2, 2);
+                    String commitId = args[1];
+                    Repository.resetCommitHistory(commitId);
+                    break;
                 case "status":
                     validateNumArgs("status", args, 1, 1);
                     Repository.checkCommitStatus();

@@ -123,9 +123,9 @@ public class Commit implements Serializable {
         // Failure case: If no files have been staged, abort.
         if (adds == null & removal == null) {
             throw error("No changes added to the commit.");
-
+        }
         // Check if there's any files staged for additions
-        } else if (adds != null && !adds.isEmpty()) {
+        if (adds != null && !adds.isEmpty()) {
             for (String fileName : adds) {
                 File file = join(Repository.STAGED_ADD_FOLDER, fileName);
                 byte[] bytes = readContents(file);
@@ -134,8 +134,9 @@ public class Commit implements Serializable {
                 fileIndex.put(fileName, blobId);
                 Repository.deleteIfExists(file);
             }
+        }
         // Check if there's any files staged for removal
-        } else if (removal != null && !removal.isEmpty()) {
+        if (removal != null && !removal.isEmpty()) {
             removal.forEach(fileIndex::remove);
             for (String fileName : removal) {
                 File file = join(Repository.STAGED_RM_FOLDER, fileName);
@@ -196,7 +197,11 @@ public class Commit implements Serializable {
      */
     public static Commit fromObject(String commitId) {
         File file = blobPath(commitId);
-        return readObject(file, Commit.class);
+        try {
+            return readObject(file, Commit.class);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     /**

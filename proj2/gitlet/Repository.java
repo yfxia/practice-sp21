@@ -193,47 +193,64 @@ public class Repository {
      */
     public static void checkOutCommit(String[] args) {
         String firstArg = args[1];
-        // Usage 3: checkout [branch name], take all files at the head of the given branch.
+        // Usage 3: checkout [branch name], take all files at the head of the branch.
         if (args.length == 2) {
             File file = join(REFS, firstArg);
             if (!file.exists()) {
                 throw Utils.error("No such branch exists.");
             }
+            // Check if that branch is the current branch.
             String head = getBranchHead();
             if (head.equals(file.getName())) {
                 message("No need to checkout the current branch.");
             }
+            // Takes all files in the commit at the given branch, and puts them in the CWD.
+            String commitId = getBranchReference(firstArg);
+            restoreCommitStatus(getHeadCommitId(), commitId);
             // Set the HEAD pointer to the branch.
             setHeadReference(firstArg);
-            restoreCommitStatus(getHeadCommitId());
-        // Usage 1: checkout -- [file name], takes the version of the file and puts it in CWD.
+        // Usage 1: checkout -- [file name], takes file version & puts it in CWD.
         } else if (firstArg.equals("--")) {
             String fileName = args[2];
-            String parentCommitId = getHeadCommitId();
-            Commit parentCommit = Commit.fromObject(parentCommitId);
-
-            // Failure case: File should exist in the Current Working Directory.
-            File file = Commit.blobPath(parentCommitId);
+            String commitId = getHeadCommitId();
+            Commit commit = Commit.fromObject(commitId);
+            // Failure case: File should exist in the CWD.
+            File file = Commit.blobPath(commitId);
             if (!file.exists()) {
                 throw Utils.error("File does not exist in that commit.");
             }
-            // Can this be cached?
-            String blob = parentCommit.getFileIndex().get(fileName);
+            String blob = commit.getFileIndex().get(fileName);
             Commit.saveFileContents(fileName, Commit.readFileBlob(blob));
-
         // Usage 2: checkout [commit id] -- [file name], puts it in CWD.
         } else if (args[2].equals("--")) {
             String commitId = args[1];
             String fileName = args[3];
             File file = Commit.blobPath(commitId);
             if (!file.exists()) {
-                throw Utils.error("No commit with that id exists.");
+                throw error("No commit with that id exists.");
             }
             /* Takes the version of the file and puts it in CWD, with overwriting access. */
             Commit commit = Commit.fromObject(commitId);
             Commit.saveFileContents(fileName,
                     Commit.readFileBlob(commit.getFileIndex().get(fileName)));
         }
+    }
+
+    /**
+     * Support command `gitlet reset [commit id]`.
+     * Checks out all the files tracked by the given commit. Staging area is cleared.
+     * Removes tracked files not present. Also moves the head to that commit node.
+     * Essentially `checkout` of an arbitrary commit that changes current branch head.
+     */
+    public static void resetCommitHistory(String commitId) {
+        Commit commit = Commit.fromObject(commitId);
+        // Failure case 1: no commit with the given id exists.
+        if (commit == null) {
+            throw error("No commit with that id exists.");
+        }
+        restoreCommitStatus(getHeadCommitId(), commitId);
+        // Moves the current branch's head to that commit node
+        setHeadReference(commitId);
     }
 
     /**
@@ -247,7 +264,7 @@ public class Repository {
     }
 
     /**
-     * Supporting command gitlet global-log
+     * Supporting command `gitlet global-log`.
      * Display information about all commits ever made. Order does not matter.
      */
     public static void checkCommitGlobalLog() {
@@ -260,7 +277,7 @@ public class Repository {
     }
 
     /**
-     * Supporting command gitlet status
+     * Supporting command `gitlet status`.
      * Display what branch currently exist, and mark the current branch with *.
      * Also displays what files have been staged for addition or removal.
      */
@@ -366,29 +383,58 @@ public class Repository {
     }
 
     /**
+     * Utility function to iteratively delete all files in staging area.
+     * @param stagingFolder: folder path for staging area: Add or Remove.
+     */
+    public static void clearStagingArea(File stagingFolder) {
+        List<String> files = plainFilenamesIn(stagingFolder);
+        if (files != null && !files.isEmpty()) {
+            for (String fileName: files) {
+                File file = join(stagingFolder, fileName);
+                deleteIfExists(file);
+            }
+        }
+    }
+
+    /**
      * Utility function to travel back in time to restore Repository file system exactly
      * at the time the given commitId was created.
-     * @param commitId: user-input commitId to be restored to.
+     * @param currentCommitId: current commitId.
+     * @param checkedCommitId: checked-out commitId.
      */
-    private static void restoreCommitStatus(String commitId) {
-        Commit commit = Commit.fromObject(commitId);
-        Set<String> trackedFiles = commit.getFileIndex().keySet();
+    private static void restoreCommitStatus(String currentCommitId, String checkedCommitId) {
+        Commit currentCommit = Commit.fromObject(currentCommitId);
+        Commit checkedCommit = Commit.fromObject(checkedCommitId);
+        Set<String> currentTrackedFiles = currentCommit.getFileIndex().keySet();
+        Set<String> checkedTrackedFiles = checkedCommit.getFileIndex().keySet();
         List<String> currentFiles = plainFilenamesIn(CWD);
-        // Remove files not being tracked
+        // Failure case: If a working file is untracked in the current branch and
+        // would be overwritten by the checkout, exit.
         if (currentFiles != null && !currentFiles.isEmpty()) {
             for (String fileName : currentFiles) {
-                // Delete this from CWD if not being tracked
-                if (!trackedFiles.contains(fileName)) {
-                    File file = join(CWD, fileName);
-                    deleteIfExists(file);
+                if (!currentTrackedFiles.contains(fileName)
+                        && checkedTrackedFiles.contains(fileName)) {
+                    throw error("There is an untracked file in the way;"
+                            + "delete it, or add and commit it first.");
                 }
             }
         }
+        // Remove any files that are tracked in the current branch
+        // but are not present in the checked-out branch.
+        for (String fileName : currentTrackedFiles) {
+            if (!checkedTrackedFiles.contains(fileName)) {
+                File file = join(CWD, fileName);
+                restrictedDelete(file);
+            }
+        }
         // Create files being tracked
-        for (String name : trackedFiles) {
-            String blobId = commit.getFileIndex().get(name);
+        for (String name : checkedTrackedFiles) {
+            String blobId = checkedCommit.getFileIndex().get(name);
             Commit.saveFileContents(name, Commit.readFileBlob(blobId));
         }
+        // Staging Add/Remove area is cleared.
+        clearStagingArea(STAGED_ADD_FOLDER);
+        clearStagingArea(STAGED_RM_FOLDER);
     }
 
     /**
