@@ -153,8 +153,8 @@ public class Repository {
     /**
      * Supporting `gitlet branch [branch name]` command.
      * Creates a new branch with the given name, and points it at the current head commit.
-     * It does NOT immediately switch to the newly created branch, before HEAD should be at "master".
-     * @param branchName: user-input the name of branch to be created.
+     * It does NOT immediately switch to the new branch, before should be at "master".
+     * @param branchName: user input the name of branch to be created.
      */
     public static void createNewBranch(String branchName) {
         File file = join(REFS, branchName);
@@ -164,6 +164,26 @@ public class Repository {
         String commitId = getHeadCommitId();
         // Set the given branch pointer to the current head commit.
         setBranchReference(branchName, commitId);
+    }
+
+    /**
+     * Supporting `gitlet rm-branch [branch name]
+     * Deletes the branch with the given name. This only means to delete the pointer
+     * associated with the branch; it does not mean to delete all commits that were
+     * created under the branch, or anything like that.
+     * @param branchName: user input the name of branch to be deleted.
+     */
+    public static void removeBranch(String branchName) {
+        File file = join(REFS, branchName);
+        if (!file.exists()) {
+            throw error("A branch with that name does not exist.");
+        }
+        String currentBranch = getBranchHead();
+        if (currentBranch.equals(branchName)) {
+            throw error("Cannot remove the current branch.");
+        }
+        // Delete the pointer, i.e. refs/heads/branchName path
+        deleteIfExists(file);
     }
 
     /**
@@ -213,32 +233,6 @@ public class Repository {
             Commit commit = Commit.fromObject(commitId);
             Commit.saveFileContents(fileName,
                     Commit.readFileBlob(commit.getFileIndex().get(fileName)));
-        }
-    }
-
-    /**
-     * Utility function to travel back in time to restore Repository file system exactly
-     * at the time the given commitId was created.
-     * @param commitId: user-input commitId to be restored to.
-     */
-    private static void restoreCommitStatus(String commitId) {
-        Commit commit = Commit.fromObject(commitId);
-        Set<String> trackedFiles = commit.getFileIndex().keySet();
-        List<String> currentFiles = plainFilenamesIn(CWD);
-        // Remove files not being tracked
-        if (currentFiles != null && !currentFiles.isEmpty()) {
-            for (String fileName : currentFiles) {
-                // Delete this from CWD if not being tracked
-                if (!trackedFiles.contains(fileName)) {
-                    File file = join(CWD, fileName);
-                    deleteIfExists(file);
-                }
-            }
-        }
-        // Create files being tracked
-        for (String name : trackedFiles) {
-            String blobId = commit.getFileIndex().get(name);
-            Commit.saveFileContents(name, Commit.readFileBlob(blobId));
         }
     }
 
@@ -368,6 +362,32 @@ public class Repository {
             Files.deleteIfExists(file.toPath());
         } catch (IOException e) {
             throw error("Could not delete file " + file.toPath(), e);
+        }
+    }
+
+    /**
+     * Utility function to travel back in time to restore Repository file system exactly
+     * at the time the given commitId was created.
+     * @param commitId: user-input commitId to be restored to.
+     */
+    private static void restoreCommitStatus(String commitId) {
+        Commit commit = Commit.fromObject(commitId);
+        Set<String> trackedFiles = commit.getFileIndex().keySet();
+        List<String> currentFiles = plainFilenamesIn(CWD);
+        // Remove files not being tracked
+        if (currentFiles != null && !currentFiles.isEmpty()) {
+            for (String fileName : currentFiles) {
+                // Delete this from CWD if not being tracked
+                if (!trackedFiles.contains(fileName)) {
+                    File file = join(CWD, fileName);
+                    deleteIfExists(file);
+                }
+            }
+        }
+        // Create files being tracked
+        for (String name : trackedFiles) {
+            String blobId = commit.getFileIndex().get(name);
+            Commit.saveFileContents(name, Commit.readFileBlob(blobId));
         }
     }
 

@@ -15,7 +15,7 @@ public class Main {
         try {
             Repository.setupPersistence();
             String firstArg = args[0];
-            switch(firstArg) {
+            switch (firstArg) {
                 case "init":
                     validateNumArgs("init", args, 1, 1);
                     new Repository();
@@ -43,6 +43,11 @@ public class Main {
                     validateNumArgs("rm", args, 2, 2);
                     String rmFileName = args[1];
                     Repository.removeCommit(rmFileName);
+                    break;
+                case "rm-branch":
+                    validateNumArgs("rm-branch", args, 2, 2);
+                    String rmBranchName = args[1];
+                    Repository.removeBranch(rmBranchName);
                     break;
                 case "log":
                     validateNumArgs("log", args, 1, 1);
