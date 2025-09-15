@@ -67,7 +67,7 @@ public class Main {
                     Repository.checkCommitStatus();
                     break;
                 default:
-                    Utils.message(String.format("Unknown command: %s", firstArg));
+                    error("Incorrect operands.");
             }
         } catch (GitletException | IllegalArgumentException e) {
             System.out.println(e.getMessage());

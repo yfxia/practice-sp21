@@ -214,9 +214,9 @@ public class Repository {
             String fileName = args[2];
             String commitId = getHeadCommitId();
             Commit commit = Commit.fromObject(commitId);
-            // Failure case: File should exist in the CWD.
-            File file = Commit.blobPath(commitId);
-            if (!file.exists()) {
+            // Failure case: File should exist in the previous commit.
+            Set<String> trackedFiles = commit.getFileIndex().keySet();
+            if (!trackedFiles.contains(fileName)) {
                 throw Utils.error("File does not exist in that commit.");
             }
             String blob = commit.getFileIndex().get(fileName);
@@ -225,14 +225,21 @@ public class Repository {
         } else if (args[2].equals("--")) {
             String commitId = args[1];
             String fileName = args[3];
-            File file = Commit.blobPath(commitId);
-            if (!file.exists()) {
+            File commitFile = Commit.blobPath(commitId);
+            if (!commitFile.exists()) {
                 throw error("No commit with that id exists.");
+            }
+            File file = join(CWD, fileName);
+            // Failure case: File should exist in the CWD.
+            if (!file.exists()) {
+                throw Utils.error("File does not exist in that commit.");
             }
             /* Takes the version of the file and puts it in CWD, with overwriting access. */
             Commit commit = Commit.fromObject(commitId);
             Commit.saveFileContents(fileName,
                     Commit.readFileBlob(commit.getFileIndex().get(fileName)));
+        } else {
+            throw error("Incorrect operands.");
         }
     }
 
@@ -240,7 +247,7 @@ public class Repository {
      * Support command `gitlet reset [commit id]`.
      * Checks out all the files tracked by the given commit. Staging area is cleared.
      * Removes tracked files not present. Also moves the head to that commit node.
-     * Essentially `checkout` of an arbitrary commit that changes current branch head.
+     * Essentially `checkout` of an arbitrary commit that also changes current branch head.
      */
     public static void resetCommitHistory(String commitId) {
         Commit commit = Commit.fromObject(commitId);
@@ -250,7 +257,8 @@ public class Repository {
         }
         restoreCommitStatus(getHeadCommitId(), commitId);
         // Moves the current branch's head to that commit node
-        setHeadReference(commitId);
+        String branch = getBranchHead();
+        setBranchReference(branch, commitId);
     }
 
     /**
@@ -268,11 +276,16 @@ public class Repository {
      * Display information about all commits ever made. Order does not matter.
      */
     public static void checkCommitGlobalLog() {
-        List<String> branchList = plainFilenamesIn(REFS);
-        assert branchList != null;
-        for (String branch : branchList) {
-            String commitId = getBranchReference(branch);
-            displayCommitLog(commitId);
+        File[] objList = Commit.OBJECT_FOLDER.listFiles();
+        assert objList != null;
+        for (File object : objList) {
+            String folderName = object.getName();
+            List<String> objectIds = plainFilenamesIn(object);
+            if (objectIds != null) {
+                for (String objectId : objectIds) {
+                    displayCommitLog(folderName+objectId);
+                }
+            }
         }
     }
 
@@ -465,8 +478,6 @@ public class Repository {
         return false;
     }
 
-
-
     /**
      * Utility function that takes in a commitId and display its information.
      * @param commitId: commitId ever exists.
@@ -474,12 +485,16 @@ public class Repository {
     private static void displayCommitLog(String commitId) {
         while (commitId != null) {
             Commit commit = Commit.fromObject(commitId);
-            message("===");
-            message("commit %s", commitId);
-            message("Date: %s", commit.getDateTime());
-            message("%s", commit.getMessage());
-            message("");
-            commitId = commit.getParentId();
+            if (commit != null) {
+                message("===");
+                message("commit %s", commitId);
+                message("Date: %s", commit.getDateTime());
+                message("%s", commit.getMessage());
+                message("");
+                commitId = commit.getParentId();
+            } else {
+                return;
+            }
         }
     }
 
