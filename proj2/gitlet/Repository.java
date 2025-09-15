@@ -3,6 +3,7 @@ package gitlet;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
@@ -223,12 +224,12 @@ public class Repository {
             Commit.saveFileContents(fileName, Commit.readFileBlob(blob));
         // Usage 2: checkout [commit id] -- [file name], puts it in CWD.
         } else if (args[2].equals("--")) {
-            String commitId = args[1];
             String fileName = args[3];
-            File commitFile = Commit.blobPath(commitId);
-            if (!commitFile.exists()) {
+            List<String> commitIds = findCommitIdsByPrefix(args[1], false);
+            if (commitIds.isEmpty()) {
                 throw error("No commit with that id exists.");
             }
+            String commitId = commitIds.get(0);
             File file = join(CWD, fileName);
             // Failure case: File should exist in the CWD.
             if (!file.exists()) {
@@ -276,41 +277,28 @@ public class Repository {
      * Display information about all commits ever made. Order does not matter.
      */
     public static void checkCommitGlobalLog() {
-        File[] objList = Commit.OBJECT_FOLDER.listFiles();
-        assert objList != null;
-        for (File object : objList) {
-            String folderName = object.getName();
-            List<String> objectIds = plainFilenamesIn(object);
-            if (objectIds != null) {
-                for (String objectId : objectIds) {
-                    displayCommitLog(folderName + objectId);
-                }
-            }
+        List<String> objectIds = findCommitIdsByPrefix("", true);
+        for (String objectId : objectIds) {
+            displayCommitLog(objectId);
         }
     }
 
     /**
+     * Supporting command `gitlet find [commit message]`.
      * Prints out the ids of all commits that have the given commit message.
      * If there are multiple such commits, it prints the ids out on separate lines.
      * @param commitMessage: user input single operand.
      */
     public static void findAllCommits(String commitMessage) {
-        File[] objList = Commit.OBJECT_FOLDER.listFiles();
-        assert objList != null;
         boolean foundCommit = false;
-        for (File object : objList) {
-            String folderName = object.getName();
-            List<String> objectIds = plainFilenamesIn(object);
-            if (objectIds != null) {
-                for (String objectId : objectIds) {
-                    Commit commit = Commit.fromObject(folderName + objectId);
-                    if (commit != null) {
-                        String msg = commit.getMessage();
-                        if (msg.equals(commitMessage)) {
-                            message(folderName + objectId);
-                            foundCommit = true;
-                        }
-                    }
+        List<String> objectIds = findCommitIdsByPrefix("", true);
+        for (String objectId : objectIds) {
+            Commit commit = Commit.fromObject(objectId);
+            if (commit != null) {
+                String msg = commit.getMessage();
+                if (msg.equals(commitMessage)) {
+                    message(objectId);
+                    foundCommit = true;
                 }
             }
         }
@@ -508,6 +496,54 @@ public class Repository {
         // Case 3: neither above, return false.
         return false;
     }
+
+    /**
+     * Utility function to search user-input (shortened) commitId by its prefix.
+     * @param prefix: user-input commitId argument
+     * @param wildcard: indicator variable to show if doing search all files (wild card)
+     *                or only search for a specific prefix
+     * @return: full commitId if exists, otherwise the original commit id input.
+     */
+    private static List<String> findCommitIdsByPrefix(String prefix, Boolean wildcard) {
+        File[] commitList = join(Commit.OBJECT_FOLDER, "commits").listFiles();
+        List<String> objectIdList = new ArrayList<>();
+        assert commitList != null;
+        for (File object : commitList) {
+            String folderName = object.getName();
+            if (wildcard || folderName.startsWith(prefix.substring(0, 2))) {
+                List<String> objectIds = plainFilenamesIn(object);
+                if (objectIds != null) {
+                    for (String objectId : objectIds) {
+                        if (wildcard || (folderName + objectId).startsWith(prefix)) {
+                            objectIdList.add(folderName + objectId);
+                        }
+                    }
+                }
+            }
+        }
+        return objectIdList;
+    }
+
+    /**
+     * Utility function to scan through all object files in OBJECT Folder,
+     * return a list of identified commitIds ever created.
+     * @return ArrayList of String consists of commitIds previously created.
+     */
+//    private static List<String> findCommitObjectIds() {
+//        File[] commitList = join(Commit.OBJECT_FOLDER, "commits").listFiles();
+//        List<String> objectIdList = new ArrayList<>();
+//        assert commitList != null;
+//        for (File object : commitList) {
+//            String folderName = object.getName();
+//            List<String> objectIds = plainFilenamesIn(object);
+//            if (objectIds != null) {
+//                for (String objectId : objectIds) {
+//                    objectIdList.add(folderName + objectId);
+//                }
+//            }
+//        }
+//        return objectIdList;
+//    }
 
     /**
      * Utility function that takes in a commitId and display its information.

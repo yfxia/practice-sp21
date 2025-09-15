@@ -19,8 +19,12 @@ public class Commit implements Serializable {
     /** Folder that commits located at*/
     static final File OBJECT_FOLDER = join(Repository.GITLET_DIR, "objects");
 
-    static File blobPath(String id) {
-        return join(OBJECT_FOLDER, id.substring(0, 2), id.substring(2));
+    static File blobsPath(String id) {
+        return join(OBJECT_FOLDER, "blobs", id.substring(0, 2), id.substring(2));
+    }
+
+    static File commitsPath(String id) {
+        return join(OBJECT_FOLDER, "commits",id.substring(0, 2), id.substring(2));
     }
 
     /** serialVersionUID is a long that the JVM writes alongside each serialized object. */
@@ -68,37 +72,6 @@ public class Commit implements Serializable {
         this.timestamp = (parentId == null) ? 0L : System.currentTimeMillis();
         // defensive copy to lock it down (TreeMap keeps deterministic order)
         this.fileIndex = new TreeMap<>(snapshot);
-    }
-
-    /**
-     * Feed parts directly to Utils.sha1(List<Object></>)
-     * @return sha1 hash ID of the commit, containing metadata and files/blob included
-     */
-    private String computeCommitId() {
-        List<Object> parts = new java.util.ArrayList<>();
-        parts.add("message:");
-        parts.add(message);
-        parts.add("\n");
-        parts.add("time:");
-        parts.add(getTime());
-        parts.add("\n");
-        if (parentId != null) {
-            parts.add("parent:");
-            parts.add(parentId);
-            parts.add("\n");
-        }
-        if (secondParentId != null) {
-            parts.add("secondParent:");
-            parts.add(secondParentId);
-            parts.add("\n");
-        }
-        fileIndex.forEach((fileName, blob) -> {
-            parts.add(fileName);
-            parts.add("\0");
-            parts.add(blob);
-            parts.add("\n");
-        });
-        return sha1(parts.toArray());
     }
 
     public TreeMap<String, String> getFileIndex() {
@@ -164,7 +137,7 @@ public class Commit implements Serializable {
      * @param bytes: write raw contents
      */
     public static void saveFileBlob(String blobId, byte[] bytes) {
-        File outFile = blobPath(blobId);
+        File outFile = blobsPath(blobId);
         outFile.getParentFile().mkdirs();
         writeContents(outFile, (Object) bytes);
     }
@@ -175,7 +148,7 @@ public class Commit implements Serializable {
      * @return File Content String
      */
     public static String readFileBlob(String blobId) {
-        File file =  blobPath(blobId);
+        File file =  blobsPath(blobId);
         return readContentsAsString(file);
     }
 
@@ -196,7 +169,7 @@ public class Commit implements Serializable {
      * @return Commit from file
      */
     public static Commit fromObject(String commitId) {
-        File file = blobPath(commitId);
+        File file = commitsPath(commitId);
         try {
             return readObject(file, Commit.class);
         } catch (IllegalArgumentException e) {
@@ -211,7 +184,7 @@ public class Commit implements Serializable {
      */
     public String saveCommit() {
         commitId = getCommitId();
-        File outFile = blobPath(commitId);
+        File outFile = commitsPath(commitId);
         // Once a commit node has been created, can only add new things, not anything existing.
         if (outFile.exists()) {
             throw error("A Gitlet version-control system already exists in the current directory.");
@@ -236,6 +209,23 @@ public class Commit implements Serializable {
     public String getDateTime() {
         DateTimeFormatter f = DateTimeFormatter.ofPattern("EEE MMM d HH:mm:ss yyyy Z", Locale.US);
         return Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault()).format(f);
+    }
+
+    /**
+     * Feed parts directly to Utils.sha1(List<Object></>)
+     * @return sha1 hash ID of the commit, containing metadata and files/blob included
+     */
+    private String computeCommitId() {
+        StringBuilder sb = new StringBuilder(256);
+        sb.append("commit ").append('\0');
+        sb.append("message:").append(message).append('\n');
+        sb.append("time:").append(getTime()).append('\n');
+        if (parentId != null) sb.append("parent:").append(parentId).append('\n');
+        if (secondParentId != null) sb.append("secondParent:").append(secondParentId).append('\n');
+        fileIndex.forEach((name, blob) ->
+                sb.append(name).append('\0').append(blob).append('\n')
+        );
+        return sha1(sb.toString());
     }
 
     private String getCommitId() {
