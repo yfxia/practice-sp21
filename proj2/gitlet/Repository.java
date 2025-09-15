@@ -283,7 +283,7 @@ public class Repository {
             List<String> objectIds = plainFilenamesIn(object);
             if (objectIds != null) {
                 for (String objectId : objectIds) {
-                    displayCommitLog(folderName+objectId);
+                    displayCommitLog(folderName + objectId);
                 }
             }
         }
