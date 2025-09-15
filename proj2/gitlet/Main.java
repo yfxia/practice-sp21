@@ -13,11 +13,15 @@ public class Main {
      */
     public static void main(String[] args) {
         try {
-            Repository.setupPersistence();
+            if (args.length == 0) {
+                message("Please enter a command.");
+                System.exit(0);
+            }
             String firstArg = args[0];
             switch (firstArg) {
                 case "init":
                     validateNumArgs("init", args, 1, 1);
+                    Repository.setupPersistence();
                     new Repository();
                     break;
                 case "add":
@@ -38,6 +42,11 @@ public class Main {
                 case "checkout":
                     validateNumArgs("checkout", args, 2, 4);
                     Repository.checkOutCommit(args);
+                    break;
+                case "find":
+                    validateNumArgs("find", args, 2, 2);
+                    String commitMessage = args[1];
+                    Repository.findAllCommits(commitMessage);
                     break;
                 case "rm":
                     validateNumArgs("rm", args, 2, 2);
@@ -67,7 +76,7 @@ public class Main {
                     Repository.checkCommitStatus();
                     break;
                 default:
-                    error("Incorrect operands.");
+                    message("No command with that name exists.");
             }
         } catch (GitletException | IllegalArgumentException e) {
             System.out.println(e.getMessage());

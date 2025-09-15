@@ -290,11 +290,42 @@ public class Repository {
     }
 
     /**
+     * Prints out the ids of all commits that have the given commit message.
+     * If there are multiple such commits, it prints the ids out on separate lines.
+     * @param commitMessage: user input single operand.
+     */
+    public static void findAllCommits(String commitMessage) {
+        File[] objList = Commit.OBJECT_FOLDER.listFiles();
+        assert objList != null;
+        boolean foundCommit = false;
+        for (File object : objList) {
+            String folderName = object.getName();
+            List<String> objectIds = plainFilenamesIn(object);
+            if (objectIds != null) {
+                for (String objectId : objectIds) {
+                    Commit commit = Commit.fromObject(folderName + objectId);
+                    if (commit != null) {
+                        String msg = commit.getMessage();
+                        if (msg.equals(commitMessage)) {
+                            message(folderName + objectId);
+                            foundCommit = true;
+                        }
+                    }
+                }
+            }
+        }
+        if (!foundCommit) {
+            throw error("Found no commit with that message.");
+        }
+    }
+
+    /**
      * Supporting command `gitlet status`.
      * Display what branch currently exist, and mark the current branch with *.
      * Also displays what files have been staged for addition or removal.
      */
     public static void checkCommitStatus() {
+        checkInitRepoStatus();
         message("=== Branches ===");
         List<String> branchList = plainFilenamesIn(REFS);
         assert branchList != null;
@@ -507,6 +538,15 @@ public class Repository {
             file.createNewFile();
         } catch (IOException e) {
             throw error("Could not create file " + file.toPath(), e);
+        }
+    }
+
+    /**
+     * Utility function to check if Gitlet working directory is initialized.
+     */
+    private static void checkInitRepoStatus() {
+        if (!GITLET_DIR.exists()) {
+            throw error("Not in an initialized Gitlet directory.");
         }
     }
 
