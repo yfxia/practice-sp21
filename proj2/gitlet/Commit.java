@@ -24,7 +24,7 @@ public class Commit implements Serializable {
     }
 
     static File commitsPath(String id) {
-        return join(OBJECT_FOLDER, "commits",id.substring(0, 2), id.substring(2));
+        return join(OBJECT_FOLDER, "commits", id.substring(0, 2), id.substring(2));
     }
 
     /** serialVersionUID is a long that the JVM writes alongside each serialized object. */
@@ -216,12 +216,16 @@ public class Commit implements Serializable {
      * @return sha1 hash ID of the commit, containing metadata and files/blob included
      */
     private String computeCommitId() {
-        StringBuilder sb = new StringBuilder(256);
+        StringBuilder sb = new StringBuilder();
         sb.append("commit ").append('\0');
         sb.append("message:").append(message).append('\n');
         sb.append("time:").append(getTime()).append('\n');
-        if (parentId != null) sb.append("parent:").append(parentId).append('\n');
-        if (secondParentId != null) sb.append("secondParent:").append(secondParentId).append('\n');
+        if (parentId != null) {
+            sb.append("parent:").append(parentId).append('\n');
+        }
+        if (secondParentId != null) {
+            sb.append("secondParent:").append(secondParentId).append('\n');
+        }
         fileIndex.forEach((name, blob) ->
                 sb.append(name).append('\0').append(blob).append('\n')
         );

@@ -525,27 +525,6 @@ public class Repository {
     }
 
     /**
-     * Utility function to scan through all object files in OBJECT Folder,
-     * return a list of identified commitIds ever created.
-     * @return ArrayList of String consists of commitIds previously created.
-     */
-//    private static List<String> findCommitObjectIds() {
-//        File[] commitList = join(Commit.OBJECT_FOLDER, "commits").listFiles();
-//        List<String> objectIdList = new ArrayList<>();
-//        assert commitList != null;
-//        for (File object : commitList) {
-//            String folderName = object.getName();
-//            List<String> objectIds = plainFilenamesIn(object);
-//            if (objectIds != null) {
-//                for (String objectId : objectIds) {
-//                    objectIdList.add(folderName + objectId);
-//                }
-//            }
-//        }
-//        return objectIdList;
-//    }
-
-    /**
      * Utility function that takes in a commitId and display its information.
      * @param commitId: commitId ever exists.
      */
