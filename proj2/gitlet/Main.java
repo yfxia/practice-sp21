@@ -62,6 +62,11 @@ public class Main {
                     validateNumArgs("log", args, 1, 1);
                     Repository.checkCommitLog();
                     break;
+                case "merge":
+                    validateNumArgs("merge", args, 2, 2);
+                    String mergeBranchName = args[1];
+                    Repository.mergeBranch(mergeBranchName);
+                    break;
                 case "global-log":
                     validateNumArgs("global-log", args, 1, 1);
                     Repository.checkCommitGlobalLog();

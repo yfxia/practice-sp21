@@ -127,8 +127,16 @@ public class Commit implements Serializable {
     }
 
     /** Get parent commit id*/
-    public String getParentId() {
-        return this.parentId;
+    public List<String> getParentId() {
+        if (parentId == null && secondParentId == null) {
+            return Collections.emptyList();
+        } else if (secondParentId == null) {
+            return Collections.singletonList(parentId);
+        } else if (parentId == null) {
+            return Collections.singletonList(secondParentId);
+        } else {
+            return Arrays.asList(parentId, secondParentId);
+        }
     }
 
     /**

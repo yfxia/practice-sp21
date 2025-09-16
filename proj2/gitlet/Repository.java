@@ -3,10 +3,7 @@ package gitlet;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 import static gitlet.Utils.*;
 
@@ -345,6 +342,89 @@ public class Repository {
     }
 
     /**
+     * Supporting command `gitlet merge [branch name]`.
+     * Merge files from the given branch into the current branch.
+     * @param branch: user-input branch name to be merged together.
+     */
+    public static void mergeBranch(String branch) {
+        String branchHead = getBranchReference(branch);
+        String currentHead = getBranchHead();
+        String lca = lowestCommonAncestor(currentHead, branchHead);
+    }
+
+
+    /**
+     * Utility function to use Breadth-First-Search algorithm to find the latest
+     * common ancestor of two commit ids, i.e. the split point of the commits.
+     * @param commitIdA: commitId of current branch.
+     * @param commitIdB: commitId of the given branch.
+     * @return: the latest common ancestor of two commits where split happens.
+     */
+    private static String lowestCommonAncestor(String commitIdA, String commitIdB) {
+        // Returns a single LCA. Null only if graph is disconnected.
+        if (commitIdA == null || commitIdB == null) {
+            return null;
+        } else if (commitIdA.equals(commitIdB)) {
+            return commitIdA;
+        }
+        // 1) Distances from node A upward (BFS)
+        Map<String, Integer> distA = distToCommitId(commitIdA);
+        if (distA.containsKey(commitIdB)) {
+            return commitIdB; // node 2 is ancestor of node 1
+        }
+        // 2) BFS from B upward, keep best candidate
+        Map<String, Integer> distB = new HashMap<>();
+        distB.put(commitIdB, 0);
+        ArrayDeque<String> queue = new ArrayDeque<>();
+        queue.add(commitIdB);
+        String lca = null;
+        Integer minDist = Integer.MAX_VALUE;
+        while (!queue.isEmpty()) {
+            String x = queue.removeLast();
+            Integer db =  distB.get(x);
+            if (db > minDist) {
+                break;
+            }
+            Integer da =  distA.get(x);
+            if (da != null) {
+                int dist = Math.max(db, da);
+                if (dist < minDist) {
+                    minDist = dist;
+                    lca = x;
+                }
+            }
+            for (String parent: Commit.fromObject(x).getParentId()) {
+                if (distB.putIfAbsent(parent, db + 1) == null) {
+                    queue.add(parent);
+                }
+            }
+        }
+        return lca;
+    }
+
+    /**
+     * Utility function to build a distance hashmap: key-commitId, value-distance to node.
+     * @param id: anchor commitId from which its distance to others are calculated.
+     * @return: A hashmap that shows the distance from the anchor commitId to other nodes.
+     */
+    private static Map<String, Integer> distToCommitId(String id) {
+        Map<String, Integer> distMap = new HashMap<>();
+        distMap.put(id, 0);
+        ArrayDeque<String> queue = new ArrayDeque<>();
+        queue.add(id);
+        while (!queue.isEmpty()) {
+            String x = queue.removeLast();
+            Integer dx = distMap.get(x);
+            for (String parent: Commit.fromObject(x).getParentId()) {
+                if (distMap.putIfAbsent(parent, dx + 1) == null) {
+                    queue.add(parent);  // if this node not seen before, traverse it.
+                }
+            }
+        }
+        return distMap;
+    }
+
+    /**
      * Set the branch pointer for this commit. Will create/overwrite previous commit identifier.
      * @param branch: name of the branch.
      * @param commitId: commit that lives in this branch.
@@ -537,7 +617,8 @@ public class Repository {
                 message("Date: %s", commit.getDateTime());
                 message("%s", commit.getMessage());
                 message("");
-                commitId = commit.getParentId();
+                List<String> parentIds = commit.getParentId();
+                commitId = (parentIds.isEmpty()) ? null : parentIds.get(0);
             } else {
                 return;
             }
