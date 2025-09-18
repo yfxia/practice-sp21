@@ -388,7 +388,8 @@ public class Repository {
                 message("Encountered a merge conflict.");
             }
         }
-        Set<String> notASet = Stream.concat(givenFiles.keySet().stream(), currFiles.keySet().stream()).
+        Set<String> notASet = Stream.concat(givenFiles.keySet().stream(),
+                        currFiles.keySet().stream()).
                 filter(k -> !splitPointFiles.containsKey(k)).collect(Collectors.toSet());
         for (String name : notASet) {
             String b = currFiles.get(name);
