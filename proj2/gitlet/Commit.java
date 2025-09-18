@@ -79,6 +79,17 @@ public class Commit implements Serializable {
     }
 
     /**
+     * Utility function to remove file key from fileIndex Tree Map
+     * @param fileKey: file key to be removed, assume exists.
+     */
+    public void updateFileIndex(String fileKey) {
+        if (!this.fileIndex.containsKey(fileKey)) {
+            return;
+        }
+        this.fileIndex.remove(fileKey);
+    }
+
+    /**
      * Build fileIndex included for this commit from snapshot +/- staged files
      */
     public void buildFileIndex() {
@@ -165,8 +176,8 @@ public class Commit implements Serializable {
      * @param fileName: name of the file
      * @param contents: saved contents of the file in String
      */
-    public static void saveFileContents(String fileName, String contents) {
-        File file = Utils.join(Repository.CWD, fileName);
+    public static void saveFileContents(String fileName, String contents, File path) {
+        File file = Utils.join(path, fileName);
         writeContents(file, contents);
     }
 

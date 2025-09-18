@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static gitlet.Utils.*;
 
@@ -90,7 +92,6 @@ public class Repository {
             writeContents(stagedFile, (Object) bytes);
         }
     }
-
 
 
     /**
@@ -189,7 +190,7 @@ public class Repository {
      * Checking out to an existing snapshot of the Repository.
      * @param args: User-input list of String arguments
      */
-    public static void checkOutCommit(String[] args) {
+    public static void checkOutCommit(String... args) {
         String firstArg = args[1];
         // Usage 3: checkout [branch name], take all files at the head of the branch.
         if (args.length == 2) {
@@ -218,7 +219,7 @@ public class Repository {
                 throw Utils.error("File does not exist in that commit.");
             }
             String blob = commit.getFileIndex().get(fileName);
-            Commit.saveFileContents(fileName, Commit.readFileBlob(blob));
+            Commit.saveFileContents(fileName, Commit.readFileBlob(blob), CWD);
         // Usage 2: checkout [commit id] -- [file name], puts it in CWD.
         } else if (args[2].equals("--")) {
             String fileName = args[3];
@@ -232,10 +233,8 @@ public class Repository {
             if (!file.exists()) {
                 throw Utils.error("File does not exist in that commit.");
             }
-            /* Takes the version of the file and puts it in CWD, with overwriting access. */
             Commit commit = Commit.fromObject(commitId);
-            Commit.saveFileContents(fileName,
-                    Commit.readFileBlob(commit.getFileIndex().get(fileName)));
+            checkOutFileFromCommit(fileName, commit.getFileIndex().get(fileName));
         } else {
             throw error("Incorrect operands.");
         }
@@ -347,9 +346,65 @@ public class Repository {
      * @param branch: user-input branch name to be merged together.
      */
     public static void mergeBranch(String branch) {
-        String branchHead = getBranchReference(branch);
-        String currentHead = getBranchHead();
-        String lca = lowestCommonAncestor(currentHead, branchHead);
+        String givenHead = getBranchReference(branch);
+        String currentHead = getHeadCommitId();
+        String lca = lowestCommonAncestor(currentHead, givenHead);
+        if (lca.equals(givenHead)) {
+            message("Given branch is an ancestor of the current branch.");
+            return;
+        } else if (lca.equals(currentHead)) {
+            checkOutCommit("checkout", branch);
+            message("Current branch fast-forwarded.");
+            return;
+        }
+        TreeMap<String, String> splitPointFiles = Commit.fromObject(lca).getFileIndex();
+        TreeMap<String, String> currFiles = Commit.fromObject(currentHead).getFileIndex();
+        TreeMap<String, String> givenFiles = Commit.fromObject(givenHead).getFileIndex();
+        for (String fileName : splitPointFiles.keySet()) {
+            String aVersion = splitPointFiles.get(fileName);
+            String bVersion = currFiles.get(fileName);
+            String cVersion = givenFiles.get(fileName);
+            // Case 7: A = C && not B
+            if (bVersion == null && aVersion.equals(cVersion)) {
+                deleteIfExists(join(CWD, fileName));  // remain absent
+            // Case 6: A = B && not C
+            } else if (cVersion == null && aVersion.equals(bVersion)) {
+                deleteIfExists(join(CWD, fileName));
+                Commit.fromObject(givenHead).updateFileIndex(fileName); // untracked
+                Commit.fromObject(currentHead).updateFileIndex(fileName);
+            // Case 1: A = B != C
+            } else if (aVersion.equals(bVersion) && !aVersion.equals(cVersion)) {
+                checkOutFileFromCommit(fileName, cVersion);
+                Commit.saveFileContents(fileName, Commit.readFileBlob(cVersion),
+                        STAGED_RM_FOLDER);
+            // Case 2: A = C != B
+            } else if (aVersion.equals(cVersion) && !aVersion.equals(bVersion)) {
+                continue; // stay as they are
+            // Case 3: A != B = C
+            } else if (aVersion != bVersion && aVersion.equals(cVersion)) {
+                continue; // left unchanged
+            // Case 8: A != B != C --- merge conflict
+            } else if (!aVersion.equals(bVersion) && !aVersion.equals(cVersion)) {
+                message("Encountered a merge conflict.");
+            }
+        }
+        Set<String> notASet = Stream.concat(givenFiles.keySet().stream(), currFiles.keySet().stream()).
+                filter(k -> !splitPointFiles.containsKey(k)).collect(Collectors.toSet());
+        for (String name : notASet) {
+            String b = currFiles.get(name);
+            String c = givenFiles.get(name);
+            // Case 4: !A && B && !C
+            if (b != null && c == null) {
+                continue; // remain as they are
+            // Case 5: !A && !B && C
+            } else if (b == null && c != null) {
+                checkOutFileFromCommit(name, c);
+                Commit.saveFileContents(name, Commit.readFileBlob(c), STAGED_ADD_FOLDER);
+            }
+        }
+        String message = String.format("Merged %s into %s.", branch, getBranchHead());
+        setHeadReference(branch);
+        createCommit(message);
     }
 
 
@@ -391,6 +446,9 @@ public class Repository {
                 if (dist < minDist) {
                     minDist = dist;
                     lca = x;
+                    if (dist == db) { // early return for max-score metric
+                        return lca;
+                    }
                 }
             }
             for (String parent: Commit.fromObject(x).getParentId()) {
@@ -417,7 +475,7 @@ public class Repository {
             Integer dx = distMap.get(x);
             for (String parent: Commit.fromObject(x).getParentId()) {
                 if (distMap.putIfAbsent(parent, dx + 1) == null) {
-                    queue.add(parent);  // if this node not seen before, traverse it.
+                    queue.addFirst(parent);  // if this node not seen before, traverse it.
                 }
             }
         }
@@ -542,7 +600,7 @@ public class Repository {
         // Create files being tracked
         for (String name : checkedTrackedFiles) {
             String blobId = checkedCommit.getFileIndex().get(name);
-            Commit.saveFileContents(name, Commit.readFileBlob(blobId));
+            Commit.saveFileContents(name, Commit.readFileBlob(blobId), CWD);
         }
         // Staging Add/Remove area is cleared.
         clearStagingArea(STAGED_ADD_FOLDER);
@@ -644,6 +702,16 @@ public class Repository {
         if (!GITLET_DIR.exists()) {
             throw error("Not in an initialized Gitlet directory.");
         }
+    }
+
+    /**
+     * Utility function takes the version of the file and puts it in CWD, with overwriting access.
+     * @param fileName: tracked file name inside the commit.
+     * @param blobId: the blobId that file version will be checked.
+     */
+    private static void checkOutFileFromCommit(String fileName, String blobId) {
+        Commit.saveFileContents(fileName,
+                Commit.readFileBlob(blobId), CWD);
     }
 
 }
