@@ -387,31 +387,24 @@ public class Repository {
             String aVersion = splitPointFiles.get(fileName);
             String bVersion = currFiles.get(fileName);
             String cVersion = givenFiles.get(fileName);
-            // Case 7: A = C && not B
             if ((bVersion == null && aVersion.equals(cVersion))) {
-                deleteIfExists(join(CWD, fileName));  // remain absent
-            // Case 6: A = B && not C
+                deleteIfExists(join(CWD, fileName));  // remain absent, Case 7: A = C && not B
             } else if (cVersion == null && aVersion.equals(bVersion)) {
-                deleteIfExists(join(CWD, fileName));
+                deleteIfExists(join(CWD, fileName)); // Case 6: A = B && not C
                 Commit.fromObject(givenHead).updateFileIndex(fileName); // untracked
                 Commit.fromObject(currentHead).updateFileIndex(fileName);
-            // Case 1: A = B != C
             } else if (aVersion.equals(bVersion) && !aVersion.equals(cVersion)) {
-                checkOutFileFromCommit(fileName, cVersion);
+                checkOutFileFromCommit(fileName, cVersion); // Case 1: A = B != C
                 Commit.saveFileContents(fileName, Commit.readFileBlob(cVersion),
                         STAGED_RM_FOLDER);
-            // Case 2: A = C != B
             } else if (aVersion.equals(cVersion) && !aVersion.equals(bVersion)) {
-                continue; // stay as they are
-            // Case 3: A != B = C
+                continue; // stay as they are // Case 2: A = C != B
             } else if (aVersion != bVersion && aVersion.equals(cVersion)) {
-                continue; // left unchanged
-            // case 0: only A, not B and not C
+                continue; // left unchanged // Case 3: A != B = C
             } else if (bVersion == null && cVersion == null) {
-                deleteIfExists(join(CWD, fileName));
-            // Case 8: A != B != C --- merge conflict
+                deleteIfExists(join(CWD, fileName)); // case 0: only A, not B and not C
             } else {
-                message("Encountered a merge conflict.");
+                message("Encountered a merge conflict."); // Case 8: A != B != C
                 String mergedContent = "<<<<<<< HEAD"
                         + LINE_SEPARATOR
                         + Commit.readFileBlob(bVersion)
@@ -426,11 +419,9 @@ public class Repository {
         for (String name : notASet) {
             String b = currFiles.get(name);
             String c = givenFiles.get(name);
-            // Case 4: !A && B && !C
             if (b != null && c == null) {
-                continue; // remain as they are
-            // Case 5: !A && !B && C
-            } else if (b == null && c != null) {
+                continue; // remain as they are // Case 4: !A && B && !C
+            } else if (b == null && c != null) { // Case 5: !A && !B && C
                 checkOutFileFromCommit(name, c);
                 Commit.saveFileContents(name, Commit.readFileBlob(c), STAGED_ADD_FOLDER);
             }
