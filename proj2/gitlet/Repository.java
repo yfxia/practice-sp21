@@ -363,13 +363,9 @@ public class Repository {
         }
         TreeMap<String, String> currFiles = Commit.fromObject(currentHead).getFileIndex();
         TreeMap<String, String> givenFiles = Commit.fromObject(givenHead).getFileIndex();
-        List<String> cwdFiles = plainFilenamesIn(CWD);
-        if (cwdFiles != null && !cwdFiles.isEmpty()) {
-            List<String> untrackedSet = plainFilenamesIn(CWD).stream().
-                    filter(ele -> !currFiles.containsKey(ele)).collect(Collectors.toList());
-            if (!untrackedSet.isEmpty()) {
-                throw error("There is an untracked file in the way; delete it, or add and commit it first.");
-            }
+        if (checkUntrackedFileExists(currFiles)) {
+            throw error("There is an untracked file in the way;"
+                    + " delete it, or add and commit it first.");
         }
         String lca = lowestCommonAncestor(currentHead, givenHead);
         if (lca.equals(givenHead)) {
@@ -381,7 +377,8 @@ public class Repository {
             return;
         }
         TreeMap<String, String> splitPointFiles = Commit.fromObject(lca).getFileIndex();
-        Set<String> notASet = Stream.concat(givenFiles.keySet().stream(), currFiles.keySet().stream()).
+        Set<String> notASet = Stream.concat(givenFiles.keySet().stream(),
+                        currFiles.keySet().stream()).
                 filter(k -> !splitPointFiles.containsKey(k)).collect(Collectors.toSet());
         for (String fileName : splitPointFiles.keySet()) {
             String aVersion = splitPointFiles.get(fileName);
@@ -395,8 +392,7 @@ public class Repository {
                 Commit.fromObject(currentHead).updateFileIndex(fileName);
             } else if (aVersion.equals(bVersion) && !aVersion.equals(cVersion)) {
                 checkOutFileFromCommit(fileName, cVersion); // Case 1: A = B != C
-                Commit.saveFileContents(fileName, Commit.readFileBlob(cVersion),
-                        STAGED_RM_FOLDER);
+                Commit.saveFileContents(fileName, Commit.readFileBlob(cVersion), STAGED_RM_FOLDER);
             } else if (aVersion.equals(cVersion) && !aVersion.equals(bVersion)) {
                 continue; // stay as they are // Case 2: A = C != B
             } else if (aVersion != bVersion && aVersion.equals(cVersion)) {
@@ -563,7 +559,7 @@ public class Repository {
         try {
             File branchFile = Utils.join(REFS, branch);
             commitId = readContentsAsString(branchFile);
-        } catch (GitletException e) {
+        } catch (IllegalArgumentException e) {
             commitId = null;
         }
         return commitId;
@@ -745,7 +741,7 @@ public class Repository {
 
     /**
      * Utility function to check if staging add/rm area is empty
-     * @return: Boolean indicator on emptiness
+     * @return: Boolean indicator on emptiness.
      */
     private static Boolean checkStagingAreaEmpty() {
         List<String> addFiles = plainFilenamesIn(STAGED_ADD_FOLDER);
@@ -756,6 +752,22 @@ public class Repository {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Utility function to check if untracked files exists.
+     * @return: Boolean indicator on existence.
+     */
+    private static Boolean checkUntrackedFileExists(TreeMap<String, String> trackedFiles) {
+        List<String> cwdFiles = plainFilenamesIn(CWD);
+        if (cwdFiles != null && !cwdFiles.isEmpty()) {
+            List<String> untrackedSet = plainFilenamesIn(CWD).stream().filter(
+                    ele -> !trackedFiles.containsKey(ele)).collect(Collectors.toList());
+            if (!untrackedSet.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

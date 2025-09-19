@@ -168,10 +168,13 @@ public class Commit implements Serializable {
      */
     public static String readFileBlob(String blobId) {
         String result;
+        if (blobId == null) {
+            return "";
+        }
         try {
             File file = blobsPath(blobId);
             result = readContentsAsString(file);
-        } catch (GitletException e) {
+        } catch (IllegalArgumentException e) {
             result = "";
         }
         return result;
