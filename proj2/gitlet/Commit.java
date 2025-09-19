@@ -78,16 +78,6 @@ public class Commit implements Serializable {
         return this.fileIndex;
     }
 
-    /**
-     * Utility function to remove file key from fileIndex Tree Map
-     * @param fileKey: file key to be removed, assume exists.
-     */
-    public void updateFileIndex(String fileKey) {
-        if (!this.fileIndex.containsKey(fileKey)) {
-            return;
-        }
-        this.fileIndex.remove(fileKey);
-    }
 
     /**
      * Build fileIndex included for this commit from snapshot +/- staged files
@@ -127,14 +117,6 @@ public class Commit implements Serializable {
                 Repository.deleteIfExists(file);
             }
         }
-    }
-
-    /** Lazy-load parent by ID (cache in transient field)*/
-    public Commit getParent() {
-        if (this.parent == null && this.parentId != null) {
-            parent = Commit.fromObject(parentId);
-        }
-        return this.parent;
     }
 
     /** Get parent commit id*/

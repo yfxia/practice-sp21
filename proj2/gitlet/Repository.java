@@ -320,7 +320,7 @@ public class Repository {
         for (String branch : branchList) {
             message(branch.equals(currentBranch) ? "*%s" : "%s", branch);
         }
-        message(LINE_SEPARATOR + "=== Staged Files ===" + LINE_SEPARATOR);
+        message(LINE_SEPARATOR + "=== Staged Files ===");
         List<String> stagedAdd = checkStagingAreaStatus(STAGED_ADD_FOLDER);
 
         message(LINE_SEPARATOR + "=== Removed Files ===");
@@ -398,8 +398,7 @@ public class Repository {
                 deleteIfExists(join(CWD, fileName));  // remain absent, Case 7: A = C && not B
             } else if (cVersion == null && aVersion.equals(bVersion)) {
                 deleteIfExists(join(CWD, fileName)); // Case 6: A = B && not C
-                Commit.fromObject(givenHead).updateFileIndex(fileName); // untracked
-                Commit.fromObject(currentHead).updateFileIndex(fileName);
+                unstageFiles(fileName);
             } else if (aVersion.equals(bVersion) && !aVersion.equals(cVersion)) {
                 checkOutFileFromCommit(fileName, cVersion); // Case 1: A = B != C
                 Commit.saveFileContents(fileName, Commit.readFileBlob(cVersion), STAGED_RM_FOLDER);
@@ -712,14 +711,17 @@ public class Repository {
                 String cwdVersion = serializeFileContents(fileName, CWD);
                 String stagedVersion = serializeFileContents(fileName, STAGED_ADD_FOLDER);
                 String trackedVersion = fileIndex.get(fileName);
+                boolean notStaged = stagedVersion == null
+                        || (stagedAdd != null && !stagedAdd.contains(fileName));
                 if (trackedFiles.contains(fileName) && !trackedVersion.equals(cwdVersion)
-                        && stagedAdd != null && !stagedAdd.contains(fileName)) {
-                    message(fileName + "(modified)"); // Case 1: tracked, changed, not staged
-                } else if (stagedAdd != null && stagedAdd.contains(fileName) && cwdVersion == null) {
-                    message(fileName + "(deleted)"); // Case 3: Staged, but deleted in CWD
+                        && notStaged) {
+                    message(fileName + " (modified)"); // Case 1: tracked, changed, not staged
+                } else if (stagedAdd != null
+                        && stagedAdd.contains(fileName) && cwdVersion == null) {
+                    message(fileName + " (deleted)"); // Case 3: Staged, but deleted in CWD
                 } else if (stagedAdd != null && stagedAdd.contains(fileName)
                         && !Objects.equals(stagedVersion, cwdVersion)) {
-                    message(fileName + "(modified)"); // Case 2: Staged, but diff in CWD
+                    message(fileName + " (modified)"); // Case 2: Staged, but diff in CWD
                 }
             }
         }
@@ -729,10 +731,11 @@ public class Repository {
         List<String> deletedFiles = trackedFiles.stream().filter(k -> !currSet.contains(k)
                 && !stagedRmSet.contains(k)).collect(Collectors.toList());
         for (String name: deletedFiles) {
-            message(name + "(deleted)"); // Case 4: not staged, tracked & deleted
+            message(name + " (deleted)"); // Case 4: not staged, tracked & deleted
         }
         return currSet.stream().filter(k -> !stagedAddSet.contains(k)
-                && !stagedRmSet.contains(k) && !trackedFiles.contains(k)).collect(Collectors.toList());
+                && !stagedRmSet.contains(k)
+                && !trackedFiles.contains(k)).collect(Collectors.toList());
     }
 
     /**
