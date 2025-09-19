@@ -37,7 +37,7 @@ public class Main {
                 case "commit":
                     validateNumArgs("commit", args, 2, 2);
                     String commitFileName = args[1];
-                    Repository.createCommit(commitFileName);
+                    Repository.createCommit(commitFileName, null);
                     break;
                 case "checkout":
                     validateNumArgs("checkout", args, 2, 4);

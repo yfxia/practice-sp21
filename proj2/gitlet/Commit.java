@@ -167,8 +167,14 @@ public class Commit implements Serializable {
      * @return File Content String
      */
     public static String readFileBlob(String blobId) {
-        File file =  blobsPath(blobId);
-        return readContentsAsString(file);
+        String result;
+        try {
+            File file = blobsPath(blobId);
+            result = readContentsAsString(file);
+        } catch (GitletException e) {
+            result = "";
+        }
+        return result;
     }
 
     /**

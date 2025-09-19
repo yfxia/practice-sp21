@@ -2,6 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -33,6 +34,9 @@ public class Repository {
 
     private static final String MASTER = "master";
 
+    private static final String FILE_SEPARATOR = FileSystems.getDefault().getSeparator();
+
+    private static final String LINE_SEPARATOR = System.lineSeparator();
 
     /**
      * Set up Gitlet Persistence
@@ -99,7 +103,7 @@ public class Repository {
      * Create a new commit
      * @param message: message contains in this commit
      */
-    public static void createCommit(String message) {
+    public static void createCommit(String message, String secondParentId) {
         // Failure case: user input message cannot be null
         if (message == null || message.isEmpty()) {
             throw error("Please enter a commit message.");
@@ -117,7 +121,7 @@ public class Repository {
 
         // Create a new commit instance with metadata and file index map
         Commit newCommitInstance =
-                new Commit(message, commitId, commit, null, commit.getFileIndex());
+                new Commit(message, commitId, commit, secondParentId, commit.getFileIndex());
 
         newCommitInstance.buildFileIndex();
         String newCommitId = newCommitInstance.saveCommit();
@@ -346,8 +350,27 @@ public class Repository {
      * @param branch: user-input branch name to be merged together.
      */
     public static void mergeBranch(String branch) {
+        if (!checkStagingAreaEmpty()) {
+            throw error("You have uncommitted changes.");
+        }
         String givenHead = getBranchReference(branch);
+        if (givenHead == null) {
+            throw error("A branch with that name does not exist.");
+        }
         String currentHead = getHeadCommitId();
+        if (givenHead.equals(currentHead)) {
+            throw error("Cannot merge a branch with itself.");
+        }
+        TreeMap<String, String> currFiles = Commit.fromObject(currentHead).getFileIndex();
+        TreeMap<String, String> givenFiles = Commit.fromObject(givenHead).getFileIndex();
+        List<String> cwdFiles = plainFilenamesIn(CWD);
+        if (cwdFiles != null && !cwdFiles.isEmpty()) {
+            List<String> untrackedSet = plainFilenamesIn(CWD).stream().
+                    filter(ele -> !currFiles.containsKey(ele)).collect(Collectors.toList());
+            if (!untrackedSet.isEmpty()) {
+                throw error("There is an untracked file in the way; delete it, or add and commit it first.");
+            }
+        }
         String lca = lowestCommonAncestor(currentHead, givenHead);
         if (lca.equals(givenHead)) {
             message("Given branch is an ancestor of the current branch.");
@@ -358,14 +381,14 @@ public class Repository {
             return;
         }
         TreeMap<String, String> splitPointFiles = Commit.fromObject(lca).getFileIndex();
-        TreeMap<String, String> currFiles = Commit.fromObject(currentHead).getFileIndex();
-        TreeMap<String, String> givenFiles = Commit.fromObject(givenHead).getFileIndex();
+        Set<String> notASet = Stream.concat(givenFiles.keySet().stream(), currFiles.keySet().stream()).
+                filter(k -> !splitPointFiles.containsKey(k)).collect(Collectors.toSet());
         for (String fileName : splitPointFiles.keySet()) {
             String aVersion = splitPointFiles.get(fileName);
             String bVersion = currFiles.get(fileName);
             String cVersion = givenFiles.get(fileName);
             // Case 7: A = C && not B
-            if (bVersion == null && aVersion.equals(cVersion)) {
+            if ((bVersion == null && aVersion.equals(cVersion))) {
                 deleteIfExists(join(CWD, fileName));  // remain absent
             // Case 6: A = B && not C
             } else if (cVersion == null && aVersion.equals(bVersion)) {
@@ -383,14 +406,23 @@ public class Repository {
             // Case 3: A != B = C
             } else if (aVersion != bVersion && aVersion.equals(cVersion)) {
                 continue; // left unchanged
+            // case 0: only A, not B and not C
+            } else if (bVersion == null && cVersion == null) {
+                deleteIfExists(join(CWD, fileName));
             // Case 8: A != B != C --- merge conflict
-            } else if (!aVersion.equals(bVersion) && !aVersion.equals(cVersion)) {
+            } else {
                 message("Encountered a merge conflict.");
+                String mergedContent = "<<<<<<< HEAD"
+                        + LINE_SEPARATOR
+                        + Commit.readFileBlob(bVersion)
+                        + "======="
+                        + LINE_SEPARATOR
+                        + Commit.readFileBlob(cVersion)
+                        + ">>>>>>>";
+                Commit.saveFileContents(fileName, mergedContent, STAGED_ADD_FOLDER);
+                Commit.saveFileContents(fileName, mergedContent, CWD);
             }
         }
-        Set<String> notASet = Stream.concat(givenFiles.keySet().stream(),
-                        currFiles.keySet().stream()).
-                filter(k -> !splitPointFiles.containsKey(k)).collect(Collectors.toSet());
         for (String name : notASet) {
             String b = currFiles.get(name);
             String c = givenFiles.get(name);
@@ -404,8 +436,7 @@ public class Repository {
             }
         }
         String message = String.format("Merged %s into %s.", branch, getBranchHead());
-        setHeadReference(branch);
-        createCommit(message);
+        createCommit(message, givenHead);
     }
 
 
@@ -496,7 +527,7 @@ public class Repository {
 
     /**
      * Set HEAD pointer for this commit, at the given branch.
-     * It till put the branch path at .gitlet/refs/heads/branchName file
+     * It will put the branch path at .gitlet/refs/heads/branchName file
      * @param branch: name of the branch
      */
     public static void setHeadReference(String branch) {
@@ -537,8 +568,14 @@ public class Repository {
      * @return String: commitId.
      */
     public static String getBranchReference(String branch) {
-        File branchFile = Utils.join(REFS, branch);
-        return readContentsAsString(branchFile);
+        String commitId;
+        try {
+            File branchFile = Utils.join(REFS, branch);
+            commitId = readContentsAsString(branchFile);
+        } catch (GitletException e) {
+            commitId = null;
+        }
+        return commitId;
     }
 
     /**
@@ -713,6 +750,21 @@ public class Repository {
     private static void checkOutFileFromCommit(String fileName, String blobId) {
         Commit.saveFileContents(fileName,
                 Commit.readFileBlob(blobId), CWD);
+    }
+
+    /**
+     * Utility function to check if staging add/rm area is empty
+     * @return: Boolean indicator on emptiness
+     */
+    private static Boolean checkStagingAreaEmpty() {
+        List<String> addFiles = plainFilenamesIn(STAGED_ADD_FOLDER);
+        List<String> rmFiles = plainFilenamesIn(STAGED_RM_FOLDER);
+        if (addFiles != null && !addFiles.isEmpty()) {
+            return false;
+        } else if (rmFiles != null && !rmFiles.isEmpty()) {
+            return false;
+        }
+        return true;
     }
 
 }
