@@ -395,10 +395,8 @@ public class Repository {
                 Commit.saveFileContents(fileName, Commit.readFileBlob(cVersion), STAGED_RM_FOLDER);
             } else if (aVersion.equals(cVersion) && !aVersion.equals(bVersion)) {
                 continue; // stay as they are // Case 2: A = C != B
-            } else if (aVersion != bVersion && aVersion.equals(cVersion)) {
-                continue; // left unchanged // Case 3: A != B = C
-            } else if (bVersion == null && cVersion == null) {
-                deleteIfExists(join(CWD, fileName)); // case 0: only A, not B and not C
+            } else if (!aVersion.equals(bVersion) && Objects.equals(bVersion, cVersion)) {
+                deleteIfExists(join(CWD, fileName)); // left unchanged // Case 3: A != B = C
             } else {
                 message("Encountered a merge conflict."); // Case 8: A != B != C
                 String mergedContent = "<<<<<<< HEAD"
@@ -425,6 +423,17 @@ public class Repository {
         }
         String message = String.format("Merged %s into %s.", branch, getBranchHead());
         createCommit(message, givenHead);
+    }
+
+    /**
+     * Supporting command `gitlet add-mote [remote name] [remote directory]/.gitlet`.
+     * Saves the given login information under the given remote name. Attempts to push or
+     * pull from the given remote name will attempt to use .gitlet directory.
+     * @param remoteName: name of remote branch
+     * @param remoteDir: folder name of the remote branch
+     */
+    public static void addRemoteCommit(String remoteName,  String remoteDir) {
+
     }
 
 

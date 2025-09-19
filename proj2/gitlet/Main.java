@@ -26,18 +26,19 @@ public class Main {
                     break;
                 case "add":
                     validateNumArgs("add", args, 2, 2);
-                    String addFileName = args[1];
-                    Repository.stageCommit(addFileName);
+                    Repository.stageCommit(args[1]);
+                    break;
+                case "add-remote":
+                    validateNumArgs("add-remote", args, 3, 3);
+                    Repository.addRemoteCommit(args[1], args[2]);
                     break;
                 case "branch":
                     validateNumArgs("branch", args, 2, 2);
-                    String branchName = args[1];
-                    Repository.createNewBranch(branchName);
+                    Repository.createNewBranch(args[1]);
                     break;
                 case "commit":
                     validateNumArgs("commit", args, 2, 2);
-                    String commitFileName = args[1];
-                    Repository.createCommit(commitFileName, null);
+                    Repository.createCommit(args[1], null);
                     break;
                 case "checkout":
                     validateNumArgs("checkout", args, 2, 4);
@@ -45,18 +46,15 @@ public class Main {
                     break;
                 case "find":
                     validateNumArgs("find", args, 2, 2);
-                    String commitMessage = args[1];
-                    Repository.findAllCommits(commitMessage);
+                    Repository.findAllCommits(args[1]);
                     break;
                 case "rm":
                     validateNumArgs("rm", args, 2, 2);
-                    String rmFileName = args[1];
-                    Repository.removeCommit(rmFileName);
+                    Repository.removeCommit(args[1]);
                     break;
                 case "rm-branch":
                     validateNumArgs("rm-branch", args, 2, 2);
-                    String rmBranchName = args[1];
-                    Repository.removeBranch(rmBranchName);
+                    Repository.removeBranch(args[1]);
                     break;
                 case "log":
                     validateNumArgs("log", args, 1, 1);
@@ -64,8 +62,7 @@ public class Main {
                     break;
                 case "merge":
                     validateNumArgs("merge", args, 2, 2);
-                    String mergeBranchName = args[1];
-                    Repository.mergeBranch(mergeBranchName);
+                    Repository.mergeBranch(args[1]);
                     break;
                 case "global-log":
                     validateNumArgs("global-log", args, 1, 1);
@@ -73,8 +70,7 @@ public class Main {
                     break;
                 case "reset":
                     validateNumArgs("reset", args, 2, 2);
-                    String commitId = args[1];
-                    Repository.resetCommitHistory(commitId);
+                    Repository.resetCommitHistory(args[1]);
                     break;
                 case "status":
                     validateNumArgs("status", args, 1, 1);
