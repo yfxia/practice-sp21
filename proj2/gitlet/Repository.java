@@ -32,6 +32,8 @@ public class Repository {
 
     private static final File REFS = join(GITLET_DIR, "refs", "heads");
 
+    private static final File REMOTES = join(GITLET_DIR, "refs", "remotes");
+
     private static final String MASTER = "master";
 
     private static final String FILE_SEPARATOR = FileSystems.getDefault().getSeparator();
@@ -339,7 +341,7 @@ public class Repository {
     }
 
     /**
-     * Utility fucntion to get sha1 hash of file content at the given path.
+     * Utility function to get sha1 hash of file content at the given path.
      * @param fileName: name of the file to be serialized.
      * @param path: directory where file exists.
      * @return: sha1 (blob) id of the file.
@@ -435,13 +437,39 @@ public class Repository {
     }
 
     /**
-     * Supporting command `gitlet add-mote [remote name] [remote directory]/.gitlet`.
+     * Supporting command `gitlet add-remote [remote name] [remote directory]/.gitlet`.
      * Saves the given login information under the given remote name. Attempts to push or
      * pull from the given remote name will attempt to use .gitlet directory.
      * @param remoteName: name of remote branch
      * @param remoteDir: folder name of the remote branch
      */
     public static void addRemoteCommit(String remoteName,  String remoteDir) {
+
+    }
+
+    /**
+     * Supporting command `gitlet fetch [remote name] [remote branch name]`.
+     * Brings down commits from the remote Gitlet repo into local Gitlet repo.
+     * Copies all commits and blobs from the given branch in the repo into a local branch.
+     * Changing remote branch to point to the head commit.
+     * @param remoteName: name of remote branch
+     * @param remoteBranch: remote branch name
+     */
+    public static void fetchRemoteCommit(String remoteName, String remoteBranch) {
+        File remoteGitlet = join(CWD, remoteName, ".gitlet");
+        File remoteBranchFile = join(CWD, remoteName, ".gitlet", "refs/heads/" + remoteBranch);
+        if (!remoteGitlet.exists()) {
+            throw error("Remote directory not found.");
+        } else if (!remoteBranchFile.exists()) {
+            throw error("That remote does not have that branch.");
+        }
+        List<String> remoteObjects = plainFilenamesIn(join(CWD,remoteName,
+                ".gitlet", "objects"));
+
+
+    }
+
+    private static void copyRecursively(File source, File destination) {
 
     }
 

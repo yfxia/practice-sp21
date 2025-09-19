@@ -48,6 +48,18 @@ public class Main {
                     validateNumArgs("find", args, 2, 2);
                     Repository.findAllCommits(args[1]);
                     break;
+                case "fetch":
+                    validateNumArgs("fetch", args, 3, 3);
+                    Repository.fetchRemoteBranch(args[1], args[2]);
+                    break;
+                case "pull":
+                    validateNumArgs("pull", args, 3, 3);
+                    Repository.pullRemoteBranch(args[1], args[2]);
+                    break;
+                case "push":
+                    validateNumArgs("push", args, 3, 3);
+                    Repository.pushRemoteCommits(args[1], args[2]);
+                    break;
                 case "rm":
                     validateNumArgs("rm", args, 2, 2);
                     Repository.unstageFiles(args[1]);
@@ -55,6 +67,10 @@ public class Main {
                 case "rm-branch":
                     validateNumArgs("rm-branch", args, 2, 2);
                     Repository.removeBranch(args[1]);
+                    break;
+                case "rm-remote":
+                    validateNumArgs("rm-remote", args, 2, 2);
+                    Repository.removeRemoteBranch(args[1]);
                     break;
                 case "log":
                     validateNumArgs("log", args, 1, 1);
