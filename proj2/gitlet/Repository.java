@@ -407,7 +407,8 @@ public class Repository {
                         + "======="
                         + LINE_SEPARATOR
                         + Commit.readFileBlob(cVersion)
-                        + ">>>>>>>";
+                        + ">>>>>>>"
+                        + LINE_SEPARATOR;
                 Commit.saveFileContents(fileName, mergedContent, STAGED_ADD_FOLDER);
                 Commit.saveFileContents(fileName, mergedContent, CWD);
             }
