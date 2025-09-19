@@ -316,32 +316,42 @@ public class Repository {
         checkInitRepoStatus();
         message("=== Branches ===");
         List<String> branchList = plainFilenamesIn(REFS);
-        assert branchList != null;
         String currentBranch = getBranchHead();
         for (String branch : branchList) {
             message(branch.equals(currentBranch) ? "*%s" : "%s", branch);
         }
-        message("");
-        message("=== Staged Files ===");
-        List<String> stagedFileList = plainFilenamesIn(STAGED_ADD_FOLDER);
-        if (stagedFileList != null && !stagedFileList.isEmpty()) {
-            for (String fileName : stagedFileList) {
-                message("%s", fileName);
+        message(LINE_SEPARATOR + "=== Staged Files ===" + LINE_SEPARATOR);
+        List<String> stagedAdd = checkStagingAreaStatus(STAGED_ADD_FOLDER);
+
+        message(LINE_SEPARATOR + "=== Removed Files ===");
+        List<String> stagedRm = checkStagingAreaStatus(STAGED_RM_FOLDER);
+
+        message(LINE_SEPARATOR + "=== Modifications Not Staged For Commit ===");
+        List<String> untrackedFiles = checkUnstagedAndUnTrackedFiles(stagedAdd, stagedRm);
+
+        message(LINE_SEPARATOR + "=== Untracked Files ===");
+        if (!untrackedFiles.isEmpty()) {
+            for (String fileName : untrackedFiles) {
+                message(fileName);
             }
         }
         message("");
-        message("=== Removed Files ===");
-        List<String> removedFileList = plainFilenamesIn(STAGED_RM_FOLDER);
-        if (removedFileList != null && !removedFileList.isEmpty()) {
-            for (String fileName : removedFileList) {
-                message("%s", fileName);
-            }
+    }
+
+    /**
+     * Utility fucntion to get sha1 hash of file content at the given path.
+     * @param fileName: name of the file to be serialized.
+     * @param path: directory where file exists.
+     * @return: sha1 (blob) id of the file.
+     */
+    public static String serializeFileContents(String fileName, File path) {
+        File file = join(path, fileName);
+        try {
+            byte[] bytes = readContents(file);
+            return sha1((Object) bytes);
+        } catch (IllegalArgumentException excp) {
+            return null;
         }
-        message("");
-        message("=== Modifications Not Staged For Commit ===");
-        message("");
-        message("=== Untracked Files ===");
-        message("");
     }
 
     /**
@@ -668,6 +678,60 @@ public class Repository {
         }
         // Case 3: neither above, return false.
         return false;
+    }
+
+    /**
+     * Utility function to check the files status: staged for add/removal
+     * @param stagingArea: name of the staging area to be checked
+     */
+    private static List<String> checkStagingAreaStatus(File stagingArea) {
+        List<String> stagedFileList = plainFilenamesIn(stagingArea);
+        if (stagedFileList != null && !stagedFileList.isEmpty()) {
+            for (String fileName : stagedFileList) {
+                message("%s", fileName);
+            }
+            return stagedFileList;
+        }
+        return null;
+    }
+
+
+    /**
+     * Utility function to check files are modified but not staged for commit.
+     * @param stagedAdd: List of files staged for addition.
+     * @param stagedRm: List of files staged for removal.
+     * @return: List of untracked files if there's any.
+     */
+    private static List<String> checkUnstagedAndUnTrackedFiles(List<String> stagedAdd, List<String> stagedRm) {
+        List<String> currFiles = plainFilenamesIn(CWD);
+        TreeMap<String, String> fileIndex = Commit.fromObject(getHeadCommitId()).getFileIndex();
+        Set<String> trackedFiles = fileIndex.keySet();
+        if (currFiles != null && !currFiles.isEmpty()) {
+            for (String fileName : currFiles) {
+                String cwdVersion = serializeFileContents(fileName, CWD);
+                String stagedVersion = serializeFileContents(fileName, STAGED_ADD_FOLDER);
+                String trackedVersion = fileIndex.get(fileName);
+                if (trackedFiles.contains(fileName)
+                        && !trackedVersion.equals(cwdVersion) && !stagedAdd.contains(fileName)) {
+                    message(fileName + "(modified)"); // Case 1: tracked, changed, not staged
+                } else if (stagedAdd != null && stagedAdd.contains(fileName) && cwdVersion == null) {
+                    message(fileName + "(deleted)"); // Case 3: Staged, but deleted in CWD
+                } else if (stagedAdd != null && stagedAdd.contains(fileName)
+                        && !Objects.equals(stagedVersion, cwdVersion)) {
+                    message(fileName + "(modified)"); // Case 2: Staged, but diff in CWD
+                }
+            }
+        }
+        Set<String> currSet = (currFiles == null) ? new HashSet<>() : new HashSet<>(currFiles);
+        Set<String> stagedRmSet = (stagedRm == null) ? new HashSet<>() : new HashSet<>(stagedRm);
+        Set<String> stagedAddSet = (stagedAdd == null) ? new HashSet<>() : new HashSet<>(stagedAdd);
+        List<String> deletedFiles = trackedFiles.stream().filter(k -> !currSet.contains(k)
+                && !stagedRmSet.contains(k)).collect(Collectors.toList());
+        for (String name: deletedFiles) {
+            message(name + "(deleted)"); // Case 4: not staged, tracked & deleted
+        }
+        return currSet.stream().filter(k -> !stagedAddSet.contains(k)
+                && !stagedRmSet.contains(k)).collect(Collectors.toList());
     }
 
     /**
