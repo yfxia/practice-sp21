@@ -50,7 +50,7 @@ public class Main {
                     break;
                 case "rm":
                     validateNumArgs("rm", args, 2, 2);
-                    Repository.removeCommit(args[1]);
+                    Repository.unstageFiles(args[1]);
                     break;
                 case "rm-branch":
                     validateNumArgs("rm-branch", args, 2, 2);

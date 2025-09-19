@@ -134,7 +134,7 @@ public class Repository {
      * stage it for removal and remove the file from working directory if user has not done so.
      * @param fileName: user input file name to be removed/unstaged.
      */
-    public static void removeCommit(String fileName) {
+    public static void unstageFiles(String fileName) {
         // Get the head commit to check is file is currently being tracked
         String commitId = getHeadCommitId();
         Commit commit = Commit.fromObject(commitId);
@@ -702,7 +702,8 @@ public class Repository {
      * @param stagedRm: List of files staged for removal.
      * @return: List of untracked files if there's any.
      */
-    private static List<String> checkUnstagedAndUnTrackedFiles(List<String> stagedAdd, List<String> stagedRm) {
+    private static List<String> checkUnstagedAndUnTrackedFiles(List<String> stagedAdd,
+                                                               List<String> stagedRm) {
         List<String> currFiles = plainFilenamesIn(CWD);
         TreeMap<String, String> fileIndex = Commit.fromObject(getHeadCommitId()).getFileIndex();
         Set<String> trackedFiles = fileIndex.keySet();
@@ -711,8 +712,8 @@ public class Repository {
                 String cwdVersion = serializeFileContents(fileName, CWD);
                 String stagedVersion = serializeFileContents(fileName, STAGED_ADD_FOLDER);
                 String trackedVersion = fileIndex.get(fileName);
-                if (trackedFiles.contains(fileName)
-                        && !trackedVersion.equals(cwdVersion) && !stagedAdd.contains(fileName)) {
+                if (trackedFiles.contains(fileName) && !trackedVersion.equals(cwdVersion)
+                        && stagedAdd != null && !stagedAdd.contains(fileName)) {
                     message(fileName + "(modified)"); // Case 1: tracked, changed, not staged
                 } else if (stagedAdd != null && stagedAdd.contains(fileName) && cwdVersion == null) {
                     message(fileName + "(deleted)"); // Case 3: Staged, but deleted in CWD
@@ -731,7 +732,7 @@ public class Repository {
             message(name + "(deleted)"); // Case 4: not staged, tracked & deleted
         }
         return currSet.stream().filter(k -> !stagedAddSet.contains(k)
-                && !stagedRmSet.contains(k)).collect(Collectors.toList());
+                && !stagedRmSet.contains(k) && !trackedFiles.contains(k)).collect(Collectors.toList());
     }
 
     /**
