@@ -761,8 +761,8 @@ public class Repository {
     private static Boolean checkUntrackedFileExists(TreeMap<String, String> trackedFiles) {
         List<String> cwdFiles = plainFilenamesIn(CWD);
         if (cwdFiles != null && !cwdFiles.isEmpty()) {
-            List<String> untrackedSet = plainFilenamesIn(CWD).stream().filter(
-                    ele -> !trackedFiles.containsKey(ele)).collect(Collectors.toList());
+            List<String> untrackedSet = plainFilenamesIn(CWD).stream().
+                    filter(ele -> !trackedFiles.containsKey(ele)).collect(Collectors.toList());
             if (!untrackedSet.isEmpty()) {
                 return true;
             }
