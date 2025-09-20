@@ -26,8 +26,6 @@ public class Repository {
 
     public static final File STAGED_RM_FOLDER = join(GITLET_DIR, "staged_rm");
 
-    private static final File INDEX_FOLDER = join(GITLET_DIR, "index");
-
     private static final File HEAD = join(GITLET_DIR, "HEAD");
 
     private static final File REFS = join(GITLET_DIR, "refs", "heads");
@@ -50,7 +48,6 @@ public class Repository {
     public static void setupPersistence() {
         STAGED_ADD_FOLDER.mkdirs();
         STAGED_RM_FOLDER.mkdirs();
-        INDEX_FOLDER.mkdirs();
         createNewFile(HEAD);
         REFS.mkdirs();
     }

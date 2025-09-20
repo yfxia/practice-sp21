@@ -50,15 +50,15 @@ public class Main {
                     break;
                 case "fetch":
                     validateNumArgs("fetch", args, 3, 3);
-                    Repository.fetchRemoteBranch(args[1], args[2]);
+//                    Repository.fetchRemoteBranch(args[1], args[2]);
                     break;
                 case "pull":
                     validateNumArgs("pull", args, 3, 3);
-                    Repository.pullRemoteBranch(args[1], args[2]);
+//                    Repository.pullRemoteBranch(args[1], args[2]);
                     break;
                 case "push":
                     validateNumArgs("push", args, 3, 3);
-                    Repository.pushRemoteCommits(args[1], args[2]);
+//                    Repository.pushRemoteCommits(args[1], args[2]);
                     break;
                 case "rm":
                     validateNumArgs("rm", args, 2, 2);
@@ -70,7 +70,7 @@ public class Main {
                     break;
                 case "rm-remote":
                     validateNumArgs("rm-remote", args, 2, 2);
-                    Repository.removeRemoteBranch(args[1]);
+//                    Repository.removeRemoteBranch(args[1]);
                     break;
                 case "log":
                     validateNumArgs("log", args, 1, 1);

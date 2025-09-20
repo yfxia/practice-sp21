@@ -4,71 +4,40 @@
 
 ## Classes and Data Structures
 
-### Main
+### Main Class
+Main class contains a giant switch statement to distinguish between different gitlet commands.
+Not a good design choice, can be improved later.
+
+### Commit Class
+Commit class consists of all attributes a commit object user created.
+Very critical design choices on the instance variables.
 
 
-#### Fields
-
-1. Field 1
-2. Field 2
-
-
-### Commit
-
-This class represents a `Commit` that will be stored in a file. Because each commit ID will be unique, we use it as the name of the file that the object is serialized to.
-
-All `Commit` objects are serialized within `OBJECT_FOLDER` which is withint `GITLET_DIR`.
-
-#### Instance Variables
-- Message - contains the message of a commit
-- Blob
-- Parent - the parent commit of a commit object
-- Timestamp - time at which a commit was created. Assigned by the constructor
-- CommitIndex - Hashmap stores the hierarchical relationship between commits
-    - `key`: commitId - branchName, `value`: parent's commitId
-
-Note:
-- `branch` is not included as an instance variable (real Git doesn't; branches just point to commits)
-
-### Repository
-This class defers all `Commit` specific logic to `Commit` class.
-
-#### Instance Variables
-
-- CWD - user's current working directory
-- GITLET_DIR - .gitlet folder
-- master - master branch of gitlet repository
-- HEAD - the head pointer
-
-## Utility Functions
-- getBranchHead(): get the branch name at the HEAD pointer
-- getHeadReference(): path of the HEAD reference, i.e. refs/heads/branchName
-- 
-- getHeadCommitId(): the commitId at the head pointer
-- getBranchReference(): the commitId lives at top of the branch
-- 
-- setBranchReference():
-- setHeadReference()
+### Repository Class
+Repository class encapsulates all functionalities that user can operate on the created commits.
+A few methods such as gitlet merge command contains 8 different logical cases to be thought through.
 
 
 ## Algorithms
+Using graph traversal method to find latest common ancestor.
 
 ## Persistence
-The directory structure looks like this
+The directory structure looks like this:
 ```dtd
 CWD
-├── .gitlet
-│   ├── staged_add                  ----->
-│   ├── staged_rm
-│   ├── objects
-│   ├── refs/heads/[branch_name]
-│   └── HEAD
+├── .gitlet/
+│   ├── staged_add/                   -----> area staged for addition
+│   ├── staged_rm/                    -----> area staged for removal
+│   ├── objects/                      
+│   |-------├──blobs/                 -----> where file blob ids are stored
+│   |-------├──commits/               -----> where commit hash ids are stored
+│   ├── refs/heads/[branch_name]/     -----> commit Ids are the head of the branch
+│   └── HEAD                          -----> commit Ids are the head of repo
 
 ```
-It will:
-1. Create the `.gitlet` folder if it doesn't already exist
-2. Create the `staged_add` and `objects` folder if it doesn't already exist
 
-The `Commit` class will handle the serialization of `Commit` objects.
-1. `public static Commit fromFile()` - Given the name of the `Commit` object, it retrieves the serialized data from the `objects` folder.
-2. `public void saveCommit()` - Serialize the `Commit` object to the `objects` folder.
+Reasoning
+- Easier to create separate folders for staged add and staged removal operations.
+- Faster to search to create separate folders for file blob ids and commit ids, even though both are serialized by sha1 function.
+- refs/heads/[branch name] structure is following real git's design.
+- objects/ folder are storing first 2 digits of hash ids for faster index search.
