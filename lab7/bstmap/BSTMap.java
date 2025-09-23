@@ -7,7 +7,7 @@ import java.util.*;
  * as its core data structure. It contains all the methods given in
  * Map61B except for remove, iterator and keySet.
  */
-public class BSTMap<K extends Comparable<K>, V extends Comparable<V>> implements Map61B<K, V> {
+public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
 
     private BSTNode root;            // root of BST
     private final Set<K> keys;         // set of keys
