@@ -1,8 +1,6 @@
 package bstmap;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Creates a BSTMap class that implements the Map61B interface using a BST
@@ -129,4 +127,22 @@ public class BSTMap<K extends Comparable<K>, V extends Comparable<V>> implements
     public Iterator<K> iterator() {
         throw new UnsupportedOperationException();
     }
+
+    private void traverseBST(BSTNode node, List<K> sortedKeys) {
+        if (node == null) {
+            return;
+        }
+        traverseBST(node.left, sortedKeys);
+        sortedKeys.add(node.key);
+        traverseBST(node.right, sortedKeys);
+    }
+
+    public void printInOrder() {
+        List<K> sortedK = new ArrayList<>();
+        traverseBST(root, sortedK);
+        for (K key : sortedK) {
+            System.out.print(key + " ");
+        }
+    }
+
 }
