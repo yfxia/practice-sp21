@@ -10,12 +10,10 @@ import java.util.*;
 public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
 
     private BSTNode root;            // root of BST
-    private final Set<K> keys;         // set of keys
     /**
      * Initializes an empty BST tree map table.
      */
     public BSTMap() {
-        keys = new HashSet<>();
     }
 
     /**
@@ -37,7 +35,6 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
     @Override
     public void clear() {
         root = null;
-        keys.clear();
     }
 
     @Override
@@ -45,7 +42,7 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
         if (key == null) {
             throw new IllegalArgumentException("argument to containsKey() is null");
         }
-        return keys.contains(key);
+        return keySet().contains(key);
     }
 
     @Override
@@ -89,7 +86,6 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
             throw new IllegalArgumentException("calls put() with a null key");
         }
         root = put(root, key, value);
-        keys.add(key);
     }
 
     private BSTNode put(BSTNode x, K key, V value) {
@@ -110,7 +106,14 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
 
     @Override
     public Set<K> keySet() {
-        throw new UnsupportedOperationException();
+        if (isEmpty()) {
+            return Collections.emptySet();
+        }
+        Set<K> set = new HashSet<>();
+        for (K key : keys(min(), max())) {
+            set.add(key);
+        }
+        return set;
     }
 
     @Override
@@ -125,7 +128,75 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
 
     @Override
     public Iterator<K> iterator() {
-        throw new UnsupportedOperationException();
+        return keys().iterator();
+    }
+
+    public boolean isEmpty() {
+        return size() == 0;
+    }
+
+    public K min() {
+        if (isEmpty()) {
+            throw new NoSuchElementException();
+        }
+        return min(root).key;
+    }
+
+    private BSTNode min(BSTNode node) {
+        if (node.left == null) {
+            return node;
+        }
+        return min(node.left);
+    }
+
+    public K max() {
+        if (isEmpty()) {
+            throw new NoSuchElementException();
+        }
+        return max(root).key;
+    }
+
+    private BSTNode max(BSTNode node) {
+        if (node.right == null) {
+            return node;
+        }
+        return max(node.right);
+    }
+
+    public Iterable<K> keys() {
+        if (isEmpty()) {
+            return new ArrayDeque<>();
+        }
+        return keys(min(), max());
+    }
+
+    public Iterable<K> keys(K lo, K hi) {
+        if (lo == null) {
+            throw new IllegalArgumentException("argument to keys() is null");
+        }
+        if (hi == null) {
+            throw new IllegalArgumentException("argument to keys() is null");
+        }
+        ArrayDeque<K> queue = new ArrayDeque<>();
+        keys(root, queue, lo, hi);
+        return queue;
+    }
+
+    private void keys(BSTNode node, ArrayDeque<K> queue, K lo, K hi) {
+        if (node == null) {
+            return;
+        }
+        int cmplo = lo.compareTo(node.key);
+        int cmphi = hi.compareTo(node.key);
+        if (cmplo < 0) {
+            keys(node.left, queue, lo, hi);
+        }
+        if (cmplo <= 0 && cmphi >= 0) {
+            queue.addFirst(node.key);
+        }
+        if (cmphi > 0) {
+            keys(node.right, queue, lo, hi);
+        }
     }
 
     private void traverseBST(BSTNode node, List<K> sortedKeys) {
