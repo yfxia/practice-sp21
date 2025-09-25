@@ -118,7 +118,46 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
 
     @Override
     public V remove(K key) {
-        throw new UnsupportedOperationException();
+        if (!containsKey(key)) {
+            return null;
+        }
+        V val = get(key);
+        root = remove(root, key);
+        return val;
+    }
+
+    private BSTNode remove(BSTNode node, K key) {
+        if (node == null) {
+            return null;
+        }
+        int cmp = key.compareTo(node.key);
+        if (cmp < 0) {
+            node.left = remove(node.left, key);
+        } else if (cmp > 0) {
+            node.right = remove(node.right, key);
+        } else {
+            if (node.right == null) {
+                return node.left;
+            }
+            if (node.left == null) {
+                return node.right;
+            }
+            BSTNode temp = node;
+            node = min(temp.right);
+            node.right = removeMin(temp.right);
+            node.left = temp.left;
+        }
+        node.size =  1 + size(node.left) + size(node.right);
+        return node;
+    }
+
+    private BSTNode removeMin(BSTNode node) {
+        if (node.left == null) {
+            return node.right;
+        }
+        node.left = removeMin(node.left);
+        node.size = 1 + size(node.left) + size(node.right);
+        return node;
     }
 
     @Override
@@ -131,11 +170,11 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
         return keys().iterator();
     }
 
-    public boolean isEmpty() {
+    private boolean isEmpty() {
         return size() == 0;
     }
 
-    public K min() {
+    private K min() {
         if (isEmpty()) {
             throw new NoSuchElementException();
         }
@@ -149,7 +188,7 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
         return min(node.left);
     }
 
-    public K max() {
+    private K max() {
         if (isEmpty()) {
             throw new NoSuchElementException();
         }
@@ -163,14 +202,14 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
         return max(node.right);
     }
 
-    public Iterable<K> keys() {
+    private Iterable<K> keys() {
         if (isEmpty()) {
             return new ArrayDeque<>();
         }
         return keys(min(), max());
     }
 
-    public Iterable<K> keys(K lo, K hi) {
+    private Iterable<K> keys(K lo, K hi) {
         if (lo == null) {
             throw new IllegalArgumentException("argument to keys() is null");
         }
