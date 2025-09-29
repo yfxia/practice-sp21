@@ -31,9 +31,6 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
      * */
     private Collection<Node>[] buckets;
 
-    /** create a HashSet instance variable that holds all keys.*/
-    private Set<K> keys;
-
     /** Number of items currently stored*/
     private int size;
 
@@ -65,7 +62,6 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
             throw new IllegalArgumentException();
         }
         buckets = createTable(initialSize);
-        keys = new HashSet<>();
         size = 0;
         loadFactor = maxLoad;
     }
@@ -75,10 +71,9 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
      */
     private void grow() {
         MyHashMap<K, V> newMap = new MyHashMap<>(buckets.length * 2, loadFactor);
-        for (K key : keys) {
+        for (K key : keySet()) {
             newMap.put(key, get(key));
         }
-        this.keys = newMap.keys;
         this.buckets = newMap.buckets;
         this.size = newMap.size;
     }
@@ -146,13 +141,12 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
 
     @Override
     public Iterator<K> iterator() {
-        return keys.iterator();
+        return keySet().iterator();
     }
 
     /** Remove all mappings from the map. */
     @Override
     public void clear() {
-        this.keys.clear();
         this.size = 0;
         this.buckets = createTable(defaultSize);
     }
@@ -160,7 +154,7 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
     /** Return True if thi map contains a mapping for the specified key.*/
     @Override
     public boolean containsKey(K key) {
-        return keys.contains(key);
+        return keySet().contains(key);
     }
 
     /** Returns the number of key-value mappings in this map.*/
@@ -180,10 +174,8 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
         }
         int hash = hash(key);
         Node node = createNode(key, value);
-        if (!keys.contains(key)) {
+        if (!containsKey(key)) {
             size++;
-            keys.add(key);
-
         } else {
             setValue(key, value, buckets[hash]);
         }
@@ -220,19 +212,37 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
     /** Returns a Set view of the keys contained in the map.*/
     @Override
     public Set<K> keySet() {
-        return this.keys;
+        Set<K> keys = new HashSet<>();
+        for (Collection<Node> bucket : buckets) {
+            for (Node node : bucket) {
+                keys.add(node.key);
+            }
+        }
+        return keys;
     }
 
     /** Removes the mapping for the key.*/
     @Override
     public V remove(K key) {
-        throw new UnsupportedOperationException();
+        if (!containsKey(key)) {
+            return null;
+        }
+        V oldValue = get(key);
+        Collection<Node> bucket = buckets[hash(key)];
+        if (bucket != null) {
+            for (Node node : bucket) {
+                if (node.key.equals(key)) {
+                    buckets[hash(key)].remove(node);
+                    break;
+                }
+            }
+        }
+        return oldValue;
     }
 
-    /** Removes the entry for the key only if it is currently mapped
-     * to the specified value.*/
     @Override
     public V remove(K key, V value) {
         throw new UnsupportedOperationException();
     }
+
 }
