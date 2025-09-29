@@ -1,13 +1,13 @@
 package hashmap;
 
-import java.util.Collection;
+import java.util.*;
 
 /**
  *  A hash table-backed Map implementation. Provides amortized constant time
  *  access to elements via get(), remove(), and put() in the best case.
  *
  *  Assumes null keys will never be inserted, and does not resize down upon remove().
- *  @author YOUR NAME HERE
+ *  @author Sophia Xia
  */
 public class MyHashMap<K, V> implements Map61B<K, V> {
 
@@ -26,13 +26,32 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
     }
 
     /* Instance Variables */
+    /** An array/table of Collection<Node> objects. Each collection
+     * of Nodes represents a single bucket in the hash table.
+     * */
     private Collection<Node>[] buckets;
-    // You should probably define some more!
+
+    /** create a HashSet instance variable that holds all keys.*/
+    private Set<K> keys;
+
+    /** Number of items currently stored*/
+    private int size;
+
+    /** set loadFactor = 0.75
+     * (as Java’s built-in HashMap does)*/
+    private double loadFactor;
+
+    /** defaults initialSize = 16 and */
+    private static final int defaultSize = 16;
 
     /** Constructors */
-    public MyHashMap() { }
+    public MyHashMap() {
+        this (defaultSize, 0.75);
+    }
 
-    public MyHashMap(int initialSize) { }
+    public MyHashMap(int initialSize) {
+        this (initialSize, 0.75);
+    }
 
     /**
      * MyHashMap constructor that creates a backing array of initialSize.
@@ -41,13 +60,34 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
      * @param initialSize initial size of backing array
      * @param maxLoad maximum load factor
      */
-    public MyHashMap(int initialSize, double maxLoad) { }
+    public MyHashMap(int initialSize, double maxLoad) {
+        if (initialSize <= 0 || maxLoad <= 0) {
+            throw new IllegalArgumentException();
+        }
+        buckets = createTable(initialSize);
+        keys = new HashSet<>();
+        size = 0;
+        loadFactor = maxLoad;
+    }
+
+    /**
+     * Increase the number of buckets if exceeds max load.
+     */
+    private void grow() {
+        MyHashMap<K, V> newMap = new MyHashMap<>(buckets.length * 2, loadFactor);
+        for (K key : keys) {
+            newMap.put(key, get(key));
+        }
+        this.keys = newMap.keys;
+        this.buckets = newMap.buckets;
+        this.size = newMap.size;
+    }
 
     /**
      * Returns a new node to be placed in a hash table bucket
      */
     private Node createNode(K key, V value) {
-        return null;
+        return new Node(key, value);
     }
 
     /**
@@ -69,7 +109,7 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
      * OWN BUCKET DATA STRUCTURES WITH THE NEW OPERATOR!
      */
     protected Collection<Node> createBucket() {
-        return null;
+        return new ArrayList<Node>();
     }
 
     /**
@@ -82,10 +122,117 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
      * @param tableSize the size of the table to create
      */
     private Collection<Node>[] createTable(int tableSize) {
+        buckets = new Collection[tableSize];
+        for  (int i = 0; i < tableSize; i++) {
+            buckets[i] = createBucket();
+        }
+        return buckets;
+    }
+
+    /**
+     * The constant 0x7FFFFFFF is a 32-bit integer in hexadecimal with all
+     * but the highest bit set (the highest bit).
+     * When you use % on negative value, you get a negative value.
+     * There are no negative buckets so to avoid this, remove the sign bit and
+     * one way of doing this is to use a mask
+     * e.g. x & 0x7FFFFFFF which keeps all the bits except the top one.
+     * Another way to do this is to shift the output x >>> 1 however this is slower.
+     * @param key: find hash for the specified key and avoid integer overflow.
+     * @return: the hash of the key object.
+     */
+    private int hash(K key) {
+        return (key == null) ? 0 : (0x7fffffff & key.hashCode()) % buckets.length;
+    }
+
+    @Override
+    public Iterator<K> iterator() {
+        return keys.iterator();
+    }
+
+    /** Remove all mappings from the map. */
+    @Override
+    public void clear() {
+        this.keys.clear();
+        this.size = 0;
+        this.buckets = createTable(defaultSize);
+    }
+
+    /** Return True if thi map contains a mapping for the specified key.*/
+    @Override
+    public boolean containsKey(K key) {
+        return keys.contains(key);
+    }
+
+    /** Returns the number of key-value mappings in this map.*/
+    @Override
+    public int size() { return size; }
+
+    /**
+     * Associates the value with the given key in this map.
+     * If map previously contained a mapping, old value is replaced.
+     * @param key: given key.
+     * @param value: mapped value.
+     */
+    @Override
+    public void put(K key, V value) {
+        if ( (double) size() / buckets.length > loadFactor) {
+            grow();
+        }
+        int hash = hash(key);
+        Node node = createNode(key, value);
+        if (!keys.contains(key)) {
+            size++;
+            keys.add(key);
+
+        } else {
+            setValue(key, value, buckets[hash]);
+        }
+        buckets[hash].add(node);
+    }
+
+    private void setValue(K key, V val, Collection<Node> bucket) {
+        for (Node node : bucket) {
+            if (node.key.equals(key)) {
+                node.value = val;
+            }
+        }
+    }
+
+    /**
+     * Returns the value to which the given key is mapped, or null if
+     * there's no mapping found.
+     * @param key: specified key
+     * @return value of the key maps to
+     */
+    @Override
+    public V get(K key) {
+        Collection<Node> bucket = buckets[hash(key)];
+        if (bucket != null) {
+            for (Node node : bucket) {
+                if (node.key.equals(key)) {
+                    return node.value;
+                }
+            }
+        }
         return null;
     }
 
-    // TODO: Implement the methods of the Map61B Interface below
-    // Your code won't compile until you do so!
+    /** Returns a Set view of the keys contained in the map.*/
+    @Override
+    public Set<K> keySet() {
+        return this.keys;
+    }
 
+    /** Removes the mapping for the key.*/
+    @Override
+    public V remove(K key) {
+        throw new UnsupportedOperationException();
+    }
+
+    /** Removes the entry for the key only if it is currently mapped
+     * to the specified value.*/
+    @Override
+    public V remove(K key, V value) {
+        throw new UnsupportedOperationException();
+    }
 }
