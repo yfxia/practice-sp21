@@ -14,11 +14,11 @@ public class HexWorld {
 
     private static final int WIDTH = 50;
     private static final int HEIGHT = 50;
-    public TETile[][] world;
-    public int sideLen;
-    public TETile tile;
-    public int height;
-    public int width;
+    private TETile[][] world;
+    private int sideLen;
+    private TETile tile;
+    private int height;
+    private int width;
     private static final long SEED = 1234;
     private static final Random RANDOM = new Random(SEED);
 
@@ -27,7 +27,7 @@ public class HexWorld {
         this.sideLen = size;
         fillWithNullTiles();
         this.height = size * 2; // height of the hexagon
-        this.width = size + (size-1) * 2; // width of the nesagon
+        this.width = size + (size - 1) * 2; // width of the nesagon
     }
 
     /** Build a word and prefill with NOTHING to avoid nulls */
@@ -41,15 +41,23 @@ public class HexWorld {
     public void drawHexWorld(TETile[][] world, int x0, int y0) {
         for (int j = 0; j < 3; j ++) {
             fillCol(world, j, x0, y0);
+            switch(j) {
+                case 0:
+                    fillCol(world, 0, (sideLen * 2 - 1) * 4, 0);
+                    break;
+                case 1:
+                    fillCol(world, 1, (sideLen * 2 - 1) * 2, 0);
+                    break;
+            }
         }
     }
 
     /** Utility function to fill in each single hexagon by column in the world */
     private void fillCol(TETile[][] world, int col, int x0, int y0) {
-        int start = sideLen * (2-col);  // top offset for the column
+        int start = sideLen * (2 - col);  // top offset for the column
         int count = 3 + col; // 3,4,5 for col 0,1,2
         int x = x0 + (sideLen * 2 - 1) * col; // col-to-col x step
-        for (int k = 0; k < count; k++) {
+        for (int k = 0; k < count; k ++) {
             int y = y0 + start + k * height;
             addHexagon(world, x, y, getRandomTile());
         }
@@ -59,8 +67,7 @@ public class HexWorld {
     /**
      * Adds a hexagon of side length s to a given position in the world.
      */
-    public void addHexagon(TETile[][] world, int x0, int y0,
-                                  TETile bgColor) {
+    public void addHexagon(TETile[][] world, int x0, int y0, TETile bgColor) {
         for (int r = sideLen - 1; r >= 0; r--) {
             int start = sideLen - r - 1;
             int end = width - (sideLen - r);
