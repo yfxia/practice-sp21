@@ -1,6 +1,4 @@
 package byow.lab12;
-import org.junit.Test;
-import static org.junit.Assert.*;
 
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
@@ -17,82 +15,100 @@ public class HexWorld {
     private static final int WIDTH = 50;
     private static final int HEIGHT = 50;
     public TETile[][] world;
-
-    public HexWorld() {
-        // Build a word and prefill with NOTHING to avoid nulls
-        this.world = new TETile[WIDTH][HEIGHT];
-        fillWithNullTiles();
-    }
-
+    public int sideLen;
+    public TETile tile;
+    public int height;
+    public int width;
     private static final long SEED = 1234;
     private static final Random RANDOM = new Random(SEED);
 
+    public HexWorld(int size) {
+        this.world = new TETile[WIDTH][HEIGHT];
+        this.sideLen = size;
+        fillWithNullTiles();
+        this.height = size * 2; // height of the hexagon
+        this.width = size + (size-1) * 2; // width of the nesagon
+    }
+
+    /** Build a word and prefill with NOTHING to avoid nulls */
     private void fillWithNullTiles() {
         for (int x = 0; x < WIDTH; x++) {
             Arrays.fill(world[x], Tileset.NOTHING);
         }
     }
 
-    public TETile[][] getHexWorld() {
-        return world;
+    /** Drawing a tesselation of hexagon based off of (x0, y0) */
+    public void drawHexWorld(TETile[][] world, int x0, int y0) {
+        for (int j = 0; j < 3; j ++) {
+            fillCol(world, j, x0, y0);
+        }
+    }
+
+    /** Utility function to fill in each single hexagon by column in the world */
+    private void fillCol(TETile[][] world, int col, int x0, int y0) {
+        int start = sideLen * (2-col);  // top offset for the column
+        int count = 3 + col; // 3,4,5 for col 0,1,2
+        int x = x0 + (sideLen * 2 - 1) * col; // col-to-col x step
+        for (int k = 0; k < count; k++) {
+            int y = y0 + start + k * height;
+            addHexagon(world, x, y, getRandomTile());
+        }
+    }
+
+
+    /**
+     * Adds a hexagon of side length s to a given position in the world.
+     */
+    public void addHexagon(TETile[][] world, int x0, int y0,
+                                  TETile bgColor) {
+        for (int r = sideLen - 1; r >= 0; r--) {
+            int start = sideLen - r - 1;
+            int end = width - (sideLen - r);
+            fillRow(world, x0, y0, start, end, r, bgColor);
+        }
     }
 
     /**
-     * Create a Hexagon class to create a Hexagon object given
-     * the tile type and size of the hexagon.
+     * Utility function to fill in world by rows, from position [s,e]
+     * inclusive with offset values (x0, y0) starting from bottom left corner.
      */
-    public static class Hexagon {
-        private final TETile tile;
-        private final int size;
-        private final int height;
-        private final int width;
-
-        public Hexagon(TETile tile, int sideLength) {
-            this.tile = tile;
-            this.size = sideLength;
-            this.height = size * 2; // number of rectangular rows
-            this.width = size + (size-1) * 2; // number of rec cols
-        }
-
-        /**
-         * Adds a hexagon of side length s to a given position in the world.
-         * @return a world of hexagon tiles.
-         */
-        public TETile[][] addHexagon(TETile[][] world, int x0, int y0, TETile bgColor) {
-            for (int r = size - 1; r >= 0; r--) {
-                int start = size - r - 1;
-                int end = width - (size - r);
-                fillRow(world, x0, y0, start, end, r, bgColor);
+    private void fillRow(TETile[][] world, int x0, int y0, int s, int e, int r,
+                                TETile tile) {
+        int mirror = height - (r + 1);
+        for (int j = 0; j < width; j++) {
+            if (j >= s && j <= e) {
+                world[x0 + j][y0 + r] = tile;
+                world[x0 + j][y0 + mirror] = tile;
             }
-            return world;
-        }
 
-        private void fillRow(TETile[][] world, int x0, int y0, int s, int e, int r, TETile bgColor) {
-            int mirror = height - (r + 1);
-            for (int j = 0; j < width; j++) {
-                TETile t = (j >= s && j <= e) ? tile : bgColor;
-                world[x0 + j][y0 + r] = t;
-                world[x0 + j][y0 + mirror] = t;
-            }
         }
+    }
 
-        public TETile getHexagonTile() {
-            return tile;
-        }
-
-        public int getHexagonSize() {
-            return size;
-        }
-
+    private TETile getRandomTile() {
+        int tileNum = RANDOM.nextInt(10);
+        return switch (tileNum) {
+            case 0 -> Tileset.GRASS;
+            case 1 -> Tileset.TREE;
+            case 2 -> Tileset.MOUNTAIN;
+            case 3 -> Tileset.WATER;
+            case 4 -> Tileset.UNLOCKED_DOOR;
+            case 5 -> Tileset.LOCKED_DOOR;
+            case 6 -> Tileset.FLOOR;
+            case 7 -> Tileset.AVATAR;
+            case 8 -> Tileset.SAND;
+            case 9 -> Tileset.WALL;
+            default -> Tileset.FLOWER;
+        };
     }
 
     public static void main(String[] args) {
-        TETile[][] world = new HexWorld().getHexWorld();
+        HexWorld hex = new HexWorld(4);
+        TETile[][] world = hex.world;
         TERenderer ter = new TERenderer();
         ter.initialize(WIDTH, HEIGHT);
 
-        Hexagon hex = new Hexagon(Tileset.FLOWER, 2);
-        ter.renderFrame(hex.addHexagon(world, 10, 0, Tileset.NOTHING));
+        hex.drawHexWorld(world, 0, 0);
+        ter.renderFrame(world);
     }
 
 
