@@ -21,16 +21,13 @@ public class Engine {
      * of characters (for example, "n123sswwdasdassadwas", "n123sss:q", "lwww". The engine should
      * behave exactly as if the user typed these characters into the engine using
      * interactWithKeyboard.
-     *
      * Recall that strings ending in ":q" should cause the game to quite save. For example,
      * if we do interactWithInputString("n123sss:q"), we expect the game to run the first
      * 7 commands (n123sss) and then quit and save. If we then do
      * interactWithInputString("l"), we should be back in the exact same state.
-     *
      * In other words, both of these calls:
      *   - interactWithInputString("n123sss:q")
      *   - interactWithInputString("lww")
-     *
      * should yield the exact same world state as:
      *   - interactWithInputString("n123sssww")
      *
