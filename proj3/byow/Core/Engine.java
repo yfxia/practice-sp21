@@ -2,6 +2,12 @@ package byow.Core;
 
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
+import byow.TileEngine.Tileset;
+import edu.princeton.cs.algs4.Edge;
+
+import java.util.List;
+
+import static byow.Core.Room.isDoor;
 
 public class Engine {
     TERenderer ter = new TERenderer();
@@ -35,15 +41,34 @@ public class Engine {
      * @return the 2D TETile[][] representing the state of the world
      */
     public TETile[][] interactWithInputString(String input) {
-        // TODO: Fill out this method so that it run the engine using the input
-        // passed in as an argument, and return a 2D tile representation of the
-        // world that would have been drawn if the same inputs had been given
-        // to interactWithKeyboard().
-        //
-        // See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
-        // that works for many different input types.
 
-        TETile[][] finalWorldFrame = null;
-        return finalWorldFrame;
+        System.out.print(input);
+
+//        TERenderer ter = new TERenderer();
+//        ter.initialize(WIDTH, HEIGHT);
+//        Room room = new Room();
+//        TETile[][] world = room.world;
+//        room.drawRandomRooms(8);
+//        List<Edge> edges = room.computeMST();
+//        for (Edge edge : edges) {
+//            int a = edge.either();
+//            int b = edge.other(a);
+//            Room.DoorPair doors =  room.placeDoors(world, Room.rooms.get(a), Room.rooms.get(b));
+//            room.buildPassableMask(doors.aDoor(), doors.bDoor());
+//            List<Room.IntPair> path = AStar2D.findPath(room.passableMask, room.isInterior,
+//                    new Room.IntPair(doors.aDoor().x(), doors.aDoor().y()),
+//                    new Room.IntPair(doors.bDoor().x(), doors.bDoor().y()),
+//                    0, 0);
+//            for (Room.IntPair p : path) {
+//                if (!isDoor(world[p.x()][p.y()])) {
+//                    world[p.x()][p.y()] = Tileset.FLOOR;
+//                    room.passableMask[p.x()][p.y()] = false;
+//                }
+//                room.buildWall(p.x(), p.y());
+//            }
+//
+//        }
+//        ter.renderFrame(world);
+        return null;
     }
 }
