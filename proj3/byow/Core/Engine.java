@@ -57,8 +57,10 @@ public class Engine {
         room.drawRandomRooms(8);
         List<Edge> edges = room.computeMST();
         for (Edge edge : edges) {
-            int a = edge.either();
-            int b = edge.other(a);
+            int u = edge.either();
+            int v = edge.other(u);
+            int a = Math.min(u, v);
+            int b = Math.max(u, v);
             Room.DoorPair doors =  room.placeDoors(world, Room.rooms.get(a), Room.rooms.get(b));
             room.buildPassableMask(doors.aDoor(), doors.bDoor());
             List<Room.IntPair> path = AStar2D.findPath(room.passableMask, room.isInterior,
