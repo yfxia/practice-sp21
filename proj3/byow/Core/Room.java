@@ -66,7 +66,7 @@ public class Room {
     /** Center of the Room in (x,y) coordinates pair. */
     private IntPair center;
 
-    public Room(int seed, int width, int height) {
+    public Room(long seed, int width, int height) {
         SEED = seed;
         WIDTH = width;
         HEIGHT = height;
@@ -287,31 +287,32 @@ public class Room {
         }
     }
 
-//    public static void main(String[] args) {
-//        TERenderer ter = new TERenderer();
-//        ter.initialize(WIDTH, HEIGHT);
-//        Room room = new Room();
-//        TETile[][] world = room.world;
-//        room.drawRandomRooms(8);
-//        List<Edge> edges = room.computeMST();
-//        for (Edge edge : edges) {
-//            int a = edge.either();
-//            int b = edge.other(a);
-//            DoorPair doors =  room.placeDoors(world, Room.rooms.get(a), Room.rooms.get(b));
-//            room.buildPassableMask(doors.aDoor, doors.bDoor);
-//            List<IntPair> path = AStar2D.findPath(room.passableMask, room.isInterior,
-//                    new IntPair(doors.aDoor.x, doors.aDoor.y),
-//                    new IntPair(doors.bDoor.x, doors.bDoor.y),
-//                    0, 0);
-//            for (IntPair p : path) {
-//                if (!isDoor(world[p.x][p.y])) {
-//                    world[p.x][p.y] = Tileset.FLOOR;
-//                    room.passableMask[p.x][p.y] = false;
-//                }
-//                room.buildWall(p.x, p.y);
-//            }
-//
-//        }
-//        ter.renderFrame(world);
-//    }
+    public TETile[][] generateWord() {
+        TERenderer ter = new TERenderer();
+        ter.initialize(WIDTH, HEIGHT);
+        Room room = new Room(SEED, WIDTH, HEIGHT);
+        TETile[][] world = room.world;
+        room.drawRandomRooms(10);
+        List<Edge> edges = room.computeMST();
+        for (Edge edge : edges) {
+            int a = edge.either();
+            int b = edge.other(a);
+            Room.DoorPair doors =  room.placeDoors(world, Room.rooms.get(a), Room.rooms.get(b));
+            room.buildPassableMask(doors.aDoor(), doors.bDoor());
+            List<Room.IntPair> path = AStar2D.findPath(room.passableMask, room.isInterior,
+                    new Room.IntPair(doors.aDoor().x(), doors.aDoor().y()),
+                    new Room.IntPair(doors.bDoor().x(), doors.bDoor().y()),
+                    0, 0);
+            for (Room.IntPair p : path) {
+                if (!isDoor(world[p.x()][p.y()])) {
+                    world[p.x()][p.y()] = Tileset.FLOOR;
+                    room.passableMask[p.x()][p.y()] = false;
+                }
+                room.buildWall(p.x(), p.y());
+            }
+
+        }
+        ter.renderFrame(world);
+        return world;
+    }
 }
