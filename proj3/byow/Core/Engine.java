@@ -7,7 +7,7 @@ import edu.princeton.cs.algs4.Edge;
 
 import java.util.List;
 
-import static byow.Core.Room.isDoor;
+import static byow.Core.Room.*;
 
 public class Engine {
     TERenderer ter = new TERenderer();
