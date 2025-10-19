@@ -17,9 +17,28 @@ import static byow.Core.AStar2D.*;
  */
 public class Room {
 
-    public record IntPair(int x, int y) {}
+    public static final class IntPair {
+        private final int x, y;
+        public IntPair(int x, int y) { this.x = x; this.y = y; }
+        public int x() { return x; }
+        public int y() { return y; }
+        @Override public String toString() { return "IntPair[x="+x+", y="+y+"]"; }
+        @Override public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof IntPair)) return false;
+            IntPair p = (IntPair) o;
+            return x == p.x && y == p.y;
+        }
+        @Override public int hashCode() { return 31 * x + y; }
+    }
 
-    public record DoorPair(IntPair aDoor, IntPair bDoor) {}
+    public static final class DoorPair {
+        private final IntPair aDoor, bDoor;
+        public DoorPair(IntPair aDoor, IntPair bDoor) { this.aDoor = aDoor; this.bDoor = bDoor; }
+        public IntPair aDoor() { return aDoor; }
+        public IntPair bDoor() { return bDoor; }
+        @Override public String toString() { return "DoorPair[a="+aDoor+", b="+bDoor+"]"; }
+    }
 
     /** MINIMUM SIZE ROOM REQUIREMENT */
     public static final int MIN_WIDTH = 3;
