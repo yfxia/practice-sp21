@@ -2,12 +2,6 @@ package byow.Core;
 
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
-import byow.TileEngine.Tileset;
-import edu.princeton.cs.algs4.Edge;
-
-import java.util.List;
-
-import static byow.Core.Room.*;
 
 public class Engine {
     TERenderer ter = new TERenderer();
@@ -51,6 +45,6 @@ public class Engine {
         }
 
         Room room = new Room(seed, WIDTH, HEIGHT);
-        return room.generateWord();
+        return room.generateWord(room);
     }
 }

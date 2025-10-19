@@ -287,10 +287,10 @@ public class Room {
         }
     }
 
-    public TETile[][] generateWord() {
-        TERenderer ter = new TERenderer();
-        ter.initialize(WIDTH, HEIGHT);
-        Room room = new Room(SEED, WIDTH, HEIGHT);
+    public TETile[][] generateWord(Room room) {
+//        TERenderer ter = new TERenderer();
+//        ter.initialize(WIDTH, HEIGHT);
+//        Room room = new Room(SEED, WIDTH, HEIGHT);
         TETile[][] world = room.world;
         room.drawRandomRooms(10);
         List<Edge> edges = room.computeMST();
@@ -312,7 +312,7 @@ public class Room {
             }
 
         }
-        ter.renderFrame(world);
+//        ter.renderFrame(world);
         return world;
     }
 }
