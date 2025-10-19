@@ -43,8 +43,7 @@ public class Engine {
                 Character.toLowerCase(input.charAt(n-1)) == 's') {
             seed = Long.parseLong(input.substring(1, n-1));
         }
-
         Room room = new Room(seed, WIDTH, HEIGHT);
-        return room.generateWord(room);
+        return room.generateWord();
     }
 }

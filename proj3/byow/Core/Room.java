@@ -50,7 +50,7 @@ public class Room {
     private long SEED;
     private Random RANDOM;
 
-    static final List<Room> rooms = new ArrayList<>();
+    final List<Room> rooms = new ArrayList<>();
 
     TETile[][] world;
     Boolean[][] isInterior;
@@ -67,9 +67,10 @@ public class Room {
     private IntPair center;
 
     public Room(long seed, int width, int height) {
-        SEED = seed;
-        WIDTH = width;
-        HEIGHT = height;
+        this.SEED = seed;
+        this.WIDTH = width;
+        this.HEIGHT = height;
+        this.rooms.clear();
         initializeWorld();
     }
 
@@ -287,28 +288,30 @@ public class Room {
         }
     }
 
-    public TETile[][] generateWord(Room room) {
+    public TETile[][] generateWord() {
 //        TERenderer ter = new TERenderer();
 //        ter.initialize(WIDTH, HEIGHT);
-//        Room room = new Room(SEED, WIDTH, HEIGHT);
-        TETile[][] world = room.world;
-        room.drawRandomRooms(10);
-        List<Edge> edges = room.computeMST();
+
+        TETile[][] world = this.world;
+        this.drawRandomRooms(10);
+        List<Edge> edges = computeMST();
         for (Edge edge : edges) {
-            int a = edge.either();
-            int b = edge.other(a);
-            Room.DoorPair doors =  room.placeDoors(world, Room.rooms.get(a), Room.rooms.get(b));
-            room.buildPassableMask(doors.aDoor(), doors.bDoor());
-            List<Room.IntPair> path = AStar2D.findPath(room.passableMask, room.isInterior,
+            int u = edge.either();
+            int v = edge.other(u);
+            int a = Math.min(u, v);
+            int b = Math.max(u, v);
+            Room.DoorPair doors =  placeDoors(world, rooms.get(a), rooms.get(b));
+            buildPassableMask(doors.aDoor(), doors.bDoor());
+            List<Room.IntPair> path = AStar2D.findPath(passableMask, isInterior,
                     new Room.IntPair(doors.aDoor().x(), doors.aDoor().y()),
                     new Room.IntPair(doors.bDoor().x(), doors.bDoor().y()),
                     0, 0);
             for (Room.IntPair p : path) {
                 if (!isDoor(world[p.x()][p.y()])) {
                     world[p.x()][p.y()] = Tileset.FLOOR;
-                    room.passableMask[p.x()][p.y()] = false;
+                    passableMask[p.x()][p.y()] = false;
                 }
-                room.buildWall(p.x(), p.y());
+                buildWall(p.x(), p.y());
             }
 
         }
