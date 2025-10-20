@@ -2,18 +2,23 @@ package byow.Core;
 
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
+import static byow.Core.KeyboardUtils.*;
 
 public class Engine {
     TERenderer ter = new TERenderer();
     /* Feel free to change the width and height. */
-    public static final int WIDTH = 80;
-    public static final int HEIGHT = 30;
+    public static final int WIDTH = 50;
+    public static final int HEIGHT = 60;
 
     /**
      * Method used for exploring a fresh world. This method should handle all inputs,
      * including inputs from the main menu.
      */
     public void interactWithKeyboard() {
+        KeyboardUtils keyboard = new KeyboardUtils(WIDTH, HEIGHT);
+        keyboard.startGame();
+        String seed = keyboard.solicitUserInput(19);
+        interactWithInputString("n" + seed + "s");
     }
 
     /**

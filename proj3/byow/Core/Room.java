@@ -277,7 +277,7 @@ public class Room {
         return !(aR < bL || bR < aL || aT < bB || bT < aB);
     }
 
-    void buildWall(int x, int y) {
+    private void buildWall(int x, int y) {
         for (Dir dir : ORDER) {
             int nx = x + dir.dx;
             int ny = y + dir.dy;
@@ -288,9 +288,11 @@ public class Room {
         }
     }
 
+
+
     public TETile[][] generateWord() {
-//        TERenderer ter = new TERenderer();
-//        ter.initialize(WIDTH, HEIGHT);
+        TERenderer ter = new TERenderer();
+        ter.initialize(WIDTH, HEIGHT);
 
         TETile[][] world = this.world;
         this.drawRandomRooms(10);
@@ -315,7 +317,7 @@ public class Room {
             }
 
         }
-//        ter.renderFrame(world);
+        ter.renderFrame(world);
         return world;
     }
 }
