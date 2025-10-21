@@ -100,7 +100,8 @@ public class AStar2D {
                     g[vid] = tentative;
                     parent[vid] = current.id;
                     cameDir[vid] = dir;
-                    open.add(new Node(vid, tentative + h(new IntPair(nx, ny), goal), tentative, dir));
+                    open.add(new Node(vid,
+                            tentative + h(new IntPair(nx, ny), goal), tentative, dir));
                 }
             }
         }
