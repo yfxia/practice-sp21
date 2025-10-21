@@ -50,6 +50,7 @@ public class KeyboardUtils {
     public String solicitUserInput(int n) {
         boolean terminate = false;
         StringBuilder s = new StringBuilder();
+        String userInput;
         while (!terminate && s.length() < n) {
             if (StdDraw.hasNextKeyTyped()) {
                 char key = StdDraw.nextKeyTyped();
@@ -64,7 +65,8 @@ public class KeyboardUtils {
                 }
             }
         }
-        return s.toString();
+        userInput = "n" + s + "s";
+        return userInput;
     }
 
     public void startGame() {

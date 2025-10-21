@@ -17,8 +17,8 @@ public class Engine {
     public void interactWithKeyboard() {
         KeyboardUtils keyboard = new KeyboardUtils(WIDTH, HEIGHT);
         keyboard.startGame();
-        String seed = keyboard.solicitUserInput(19);
-        interactWithInputString("n" + seed + "s");
+        String userInput = keyboard.solicitUserInput(19);
+        interactWithInputString(userInput);
     }
 
     /**
@@ -41,14 +41,20 @@ public class Engine {
      */
     public TETile[][] interactWithInputString(String input) {
 
-        System.out.print(input);
         long seed = 1;
+        String moves = "";
         int n = input.length();
-        if (Character.toLowerCase(input.charAt(0)) == 'n' &&
-                Character.toLowerCase(input.charAt(n-1)) == 's') {
-            seed = Long.parseLong(input.substring(1, n-1));
+        if (Character.toLowerCase(input.charAt(0)) == 'n') {
+            char endSeed = 's';
+            int index = input.indexOf(endSeed);
+            seed = Long.parseLong(input.substring(1, index));
+            if (index + 1 < n) {
+                moves = input.substring(index + 1);
+            }
+
         }
+
         Room room = new Room(seed, WIDTH, HEIGHT);
-        return room.generateWord();
+        return room.generateWord(moves);
     }
 }

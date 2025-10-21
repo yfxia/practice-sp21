@@ -66,6 +66,8 @@ public class Room {
     /** Center of the Room in (x,y) coordinates pair. */
     private IntPair center;
 
+    public IntPair moveAvatar;
+
     public Room(long seed, int width, int height) {
         this.SEED = seed;
         this.WIDTH = width;
@@ -288,11 +290,35 @@ public class Room {
         }
     }
 
+    private void cleanupRoomAndAddAvatar() {
+        boolean avatar = false;
+        boolean lockedDoor = false;
+        for (int x = 0; x < WIDTH; x++) {
+            for (int y = 0; y < HEIGHT; y++) {
+                if (isDoor(world[x][y])) {
+                    world[x][y] = Tileset.FLOOR;
+                    isInterior[x][y] = true;
+                }
+                if (isInterior[x][y] && !avatar) {
+                    if (gaussian(RANDOM) >= 0.97) {
+                        avatar = true;
+                        world[x][y] = Tileset.AVATAR;
+                        moveAvatar = new IntPair(x, y);
+                    }
+                } else if (isWall[x][y] && !lockedDoor) {
+                    if (uniform(RANDOM) >= 0.3) {
+                        world[x][y] = Tileset.LOCKED_DOOR;
+                        lockedDoor = true;
+                        passableMask[x][y] = true;
+                    }
+                }
+            }
+        }
+    }
 
-
-    public TETile[][] generateWord() {
-        TERenderer ter = new TERenderer();
-        ter.initialize(WIDTH, HEIGHT);
+    public TETile[][] generateWord(String moves) {
+//        TERenderer ter = new TERenderer();
+//        ter.initialize(WIDTH, HEIGHT);
 
         TETile[][] world = this.world;
         this.drawRandomRooms(10);
@@ -317,7 +343,46 @@ public class Room {
             }
 
         }
-        ter.renderFrame(world);
+        cleanupRoomAndAddAvatar();
+        if (moves != null) {
+            for (String dir : moves.split("")) {
+                switch (dir.toLowerCase()) {
+                    case "a":
+                        int ax = moveAvatar.x - 1, ay = moveAvatar.y;
+                        if (inBounds(ax, ay, WIDTH, HEIGHT) && world[ax][ay] == Tileset.FLOOR) {
+                            world[moveAvatar.x][moveAvatar.y] = Tileset.FLOOR;
+                            world[ax][ay] = Tileset.AVATAR;
+                            moveAvatar = new IntPair(ax, ay);
+                        }
+                        break;
+                    case "w":
+                        int wx = moveAvatar.x, wy = moveAvatar.y + 1;
+                        if (inBounds(wx, wy, WIDTH, HEIGHT) && world[wx][wy] == Tileset.FLOOR) {
+                            world[moveAvatar.x][moveAvatar.y] = Tileset.FLOOR;
+                            world[wx][wy] = Tileset.AVATAR;
+                            moveAvatar = new IntPair(wx, wy);
+                        }
+                        break;
+                    case "d":
+                        int dx = moveAvatar.x + 1, dy = moveAvatar.y;
+                        if (inBounds(dx, dy, WIDTH, HEIGHT) && world[dx][dy] == Tileset.FLOOR) {
+                            world[moveAvatar.x][moveAvatar.y] = Tileset.FLOOR;
+                            world[dx][dy] = Tileset.AVATAR;
+                            moveAvatar = new IntPair(dx, dy);
+                        }
+                        break;
+                    case "s":
+                        int sx = moveAvatar.x, sy = moveAvatar.y - 1;
+                        if (inBounds(sx, sy, WIDTH, HEIGHT) && world[sx][sy] == Tileset.FLOOR) {
+                            world[moveAvatar.x][moveAvatar.y] = Tileset.FLOOR;
+                            world[sx][sy] = Tileset.AVATAR;
+                            moveAvatar = new IntPair(sx, sy);
+                        }
+                        break;
+                }
+            }
+        }
+//        ter.renderFrame(world);
         return world;
     }
 }
