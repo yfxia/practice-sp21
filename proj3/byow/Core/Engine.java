@@ -51,7 +51,6 @@ public class Engine {
             if (index + 1 < n) {
                 moves = input.substring(index + 1);
             }
-
         }
 
         Room room = new Room(seed, WIDTH, HEIGHT);

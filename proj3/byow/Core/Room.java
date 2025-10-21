@@ -1,5 +1,6 @@
 package byow.Core;
 
+import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
 import byow.TileEngine.Tileset;
 import edu.princeton.cs.algs4.Edge;
@@ -342,8 +343,8 @@ public class Room {
     }
 
     public TETile[][] generateWord(String moves) {
-//        TERenderer ter = new TERenderer();
-//        ter.initialize(WIDTH, HEIGHT);
+        TERenderer ter = new TERenderer();
+        ter.initialize(WIDTH, HEIGHT);
 
         this.drawRandomRooms(10);
         List<Edge> edges = computeMST();
@@ -408,7 +409,7 @@ public class Room {
                 }
             }
         }
-//        ter.renderFrame(world);
+        ter.renderFrame(world);
         return world;
     }
 }
