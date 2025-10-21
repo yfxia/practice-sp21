@@ -1,6 +1,5 @@
 package byow.Core;
 
-import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
 import byow.TileEngine.Tileset;
 import edu.princeton.cs.algs4.Edge;
@@ -19,25 +18,43 @@ public class Room {
 
     public static final class IntPair {
         private final int x, y;
-        public IntPair(int x, int y) { this.x = x; this.y = y; }
-        public int x() { return x; }
-        public int y() { return y; }
-        @Override public String toString() { return "IntPair[x="+x+", y="+y+"]"; }
+        public IntPair(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+        public int x() {
+            return x;
+        }
+        public int y() {
+            return y;
+        }
         @Override public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof IntPair)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof IntPair)) {
+                return false;
+            }
             IntPair p = (IntPair) o;
             return x == p.x && y == p.y;
         }
-        @Override public int hashCode() { return 31 * x + y; }
+        @Override public int hashCode() {
+            return 31 * x + y;
+        }
     }
 
     public static final class DoorPair {
         private final IntPair aDoor, bDoor;
-        public DoorPair(IntPair aDoor, IntPair bDoor) { this.aDoor = aDoor; this.bDoor = bDoor; }
-        public IntPair aDoor() { return aDoor; }
-        public IntPair bDoor() { return bDoor; }
-        @Override public String toString() { return "DoorPair[a="+aDoor+", b="+bDoor+"]"; }
+        public DoorPair(IntPair aDoor, IntPair bDoor) {
+            this.aDoor = aDoor;
+            this.bDoor = bDoor;
+        }
+        public IntPair aDoor() {
+            return aDoor;
+        }
+        public IntPair bDoor() {
+            return bDoor;
+        }
     }
 
     /** MINIMUM SIZE ROOM REQUIREMENT */
@@ -66,7 +83,7 @@ public class Room {
     /** Center of the Room in (x,y) coordinates pair. */
     private IntPair center;
 
-    public IntPair moveAvatar;
+    private IntPair moveAvatar;
 
     public Room(long seed, int width, int height) {
         this.SEED = seed;
@@ -83,13 +100,13 @@ public class Room {
 
     public void drawRandomRooms(int numberOfRooms) {
         while (numberOfRooms > 0) {
-            if (addARoom(world)) {
+            if (addARoom()) {
                 numberOfRooms--;
             }
         }
     }
 
-    private Boolean addARoom(TETile[][] world) {
+    private Boolean addARoom() {
         /* Randomly select origin of the room to be (x,y) */
         int x = uniform(RANDOM, WIDTH - MIN_WIDTH - 1);
         int y = uniform(RANDOM, HEIGHT - MIN_HEIGHT - 1);
@@ -107,14 +124,14 @@ public class Room {
         if (!room.overlap) {
             rooms.add(room);
             room.center = new IntPair(x + sizeX / 2, y + sizeY / 2);
-            buildRoom(world, x, y, sizeX, sizeY);
-            fillInterior(world, x, y, sizeX, sizeY);
+            buildRoom(x, y, sizeX, sizeY);
+            fillInterior(x, y, sizeX, sizeY);
         }
         return !room.overlap;
     }
 
     /** Utility function to fill in shape horizontally x-axis then vertically along y-axis. */
-    private void buildRoom(TETile[][] world, int x0, int y0, int sizeX, int sizeY) {
+    private void buildRoom(int x0, int y0, int sizeX, int sizeY) {
         for (int i = 0; i < sizeX; i++) {
             world[x0 + i][y0] = Tileset.WALL;
             world[x0 + i][y0 + sizeY - 1] = Tileset.WALL;
@@ -129,7 +146,7 @@ public class Room {
         }
     }
 
-    private void fillInterior(TETile[][] world, int x0, int y0, int sizeX, int sizeY) {
+    private void fillInterior(int x0, int y0, int sizeX, int sizeY) {
         int x1 = x0 + 1; // first tile - interior x
         int y1 = y0 + 1; // first tile - interior y
         int x2 = x0 + sizeX - 2; // last tile - interior x
@@ -185,11 +202,15 @@ public class Room {
                     best = distTo[i];
                 } // find argmin over all vertices not yet in the tree
             }
-            if (v == -1) break; // disconnected
+            if (v == -1) {
+                break; // disconnected
+            }
             inMST[v] = true; // add v to tree
             // relax edges (v,w) to every vertex w not yet in MST
             for (int w = 0; w < n; w++) {
-                if (inMST[w] || w == v) continue;
+                if (inMST[w] || w == v) {
+                    continue;
+                }
                 double d = getEuclideanDistance(rooms.get(v), rooms.get(w));
                 if (d < distTo[w]) {
                     distTo[w] = d;
@@ -213,10 +234,10 @@ public class Room {
     }
 
     /** Pick a door on each room in a connected edge.  */
-    DoorPair placeDoors(TETile[][] world, Room a, Room b) {
+    DoorPair placeDoors(Room a, Room b) {
         // Decide horizontal (L/R) vs. vertical (T/B) orientation of the corridor.
-        char ori = (Math.abs(a.center.x - b.center.x) >=
-                    Math.abs(a.center.y - b.center.y)) ? 'H' : 'V';
+        char ori = (Math.abs(a.center.x - b.center.x)
+                >= Math.abs(a.center.y - b.center.y)) ? 'H' : 'V';
         // If doorA opens on the right
         IntPair doorA = pickDoorFacing(a, b, ori);
         world[doorA.x][doorA.y] = Tileset.LOCKED_DOOR;
@@ -254,9 +275,13 @@ public class Room {
         for (int x = 0; x < WIDTH; x++) {
             for (int y = 0; y < HEIGHT; y++) {
                 boolean pass = (world[x][y] == Tileset.NOTHING);
-                if (isInterior[x][y] || isWall[x][y]) pass = false;  // force block
-                if ((x == doorA.x() && y == doorA.y()) ||
-                        (x == doorB.x() && y == doorB.y())) pass = true; // force allow
+                if (isInterior[x][y] || isWall[x][y]) {
+                    pass = false;  // force block
+                }
+                if ((x == doorA.x() && y == doorA.y())
+                        || (x == doorB.x() && y == doorB.y())) {
+                    pass = true; // force allow
+                }
                 passableMask[x][y] = pass;
             }
         }
@@ -320,7 +345,6 @@ public class Room {
 //        TERenderer ter = new TERenderer();
 //        ter.initialize(WIDTH, HEIGHT);
 
-        TETile[][] world = this.world;
         this.drawRandomRooms(10);
         List<Edge> edges = computeMST();
         for (Edge edge : edges) {
@@ -328,7 +352,7 @@ public class Room {
             int v = edge.other(u);
             int a = Math.min(u, v);
             int b = Math.max(u, v);
-            Room.DoorPair doors =  placeDoors(world, rooms.get(a), rooms.get(b));
+            Room.DoorPair doors =  placeDoors(rooms.get(a), rooms.get(b));
             buildPassableMask(doors.aDoor(), doors.bDoor());
             List<Room.IntPair> path = AStar2D.findPath(passableMask, isInterior,
                     new Room.IntPair(doors.aDoor().x(), doors.aDoor().y()),
@@ -378,6 +402,8 @@ public class Room {
                             world[sx][sy] = Tileset.AVATAR;
                             moveAvatar = new IntPair(sx, sy);
                         }
+                        break;
+                    default:
                         break;
                 }
             }

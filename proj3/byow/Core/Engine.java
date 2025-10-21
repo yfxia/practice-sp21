@@ -17,7 +17,7 @@ public class Engine {
     public void interactWithKeyboard() {
         KeyboardUtils keyboard = new KeyboardUtils(WIDTH, HEIGHT);
         keyboard.startGame();
-        String userInput = keyboard.solicitUserInput(19);
+        String userInput = keyboard.solicitUserInput();
         interactWithInputString(userInput);
     }
 

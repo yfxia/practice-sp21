@@ -3,7 +3,6 @@ package byow.Core;
 import edu.princeton.cs.algs4.StdDraw;
 
 import java.awt.*;
-import java.util.Random;
 
 public class KeyboardUtils {
 
@@ -47,11 +46,11 @@ public class KeyboardUtils {
         StdDraw.show();
     }
 
-    public String solicitUserInput(int n) {
+    public String solicitUserInput() {
         boolean terminate = false;
         StringBuilder s = new StringBuilder();
         String userInput;
-        while (!terminate && s.length() < n) {
+        while (!terminate && s.length() < 19) {
             if (StdDraw.hasNextKeyTyped()) {
                 char key = StdDraw.nextKeyTyped();
                 if (Character.toLowerCase(key) == 'n') {

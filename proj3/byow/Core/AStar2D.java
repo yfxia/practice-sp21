@@ -7,7 +7,7 @@ public class AStar2D {
 
     enum Dir {
         // Instances of Dir.
-        E(1, 0), W(-1, 0), N(0,1), S(0, -1);
+        E(1, 0), W(-1, 0), N(0, 1), S(0, -1);
         final int dx, dy;
         Dir(int dx, int dy) {
             this.dx = dx;
@@ -22,7 +22,7 @@ public class AStar2D {
         double f;
         double g;
         Dir dir;
-        Node (int id, double f, double g, Dir dir) {
+        Node(int id, double f, double g, Dir dir) {
             this.id = id;
             this.f = f;
             this.g = g;
@@ -31,7 +31,7 @@ public class AStar2D {
     }
 
     /** Compute Heuristic function: Manhattan distance -- 4-way */
-    public static int h (IntPair a, IntPair b) {
+    public static int h(IntPair a, IntPair b) {
         return Math.abs(a.x() - b.x()) + Math.abs(a.y() - b.y());
     }
 
@@ -42,8 +42,8 @@ public class AStar2D {
         int W = passable.length;
         int H = passable[0].length;
         int N = W * H;
-        if (!inBounds(start, W, H) || !inBounds(goal, W, H) ||
-                !passable[start.x()][start.y()] || !passable[goal.x()][goal.y()]) {
+        if (!inBounds(start, W, H) || !inBounds(goal, W, H)
+                || !passable[start.x()][start.y()] || !passable[goal.x()][goal.y()]) {
             return Collections.emptyList();
         }
 
@@ -55,9 +55,9 @@ public class AStar2D {
         boolean[] visited = new boolean[N]; // Marks tile if fully processed.
         // f = g + h (priority key)
         PriorityQueue<Node> open = new PriorityQueue<>(
-                Comparator.<Node>comparingDouble(n -> n.f)
-                        .thenComparing((a,b) -> Double.compare(b.g, a.g))
-                        .thenComparingInt(n -> n.id)
+                Comparator.<Node>comparingDouble(n -> n.f).
+                        thenComparing((a, b) -> Double.compare(b.g, a.g)).
+                        thenComparingInt(n -> n.id)
         );
         int s = toId(start.x(), start.y(), W);
         int t = toId(goal.x(), goal.y(), W);
@@ -67,17 +67,25 @@ public class AStar2D {
 
         while (!open.isEmpty()) {
             Node current = open.poll();
-            if (visited[current.id]) continue;
+            if (visited[current.id]) {
+                continue;
+            }
             visited[current.id] = true;
-            if (current.id == t) break; // found the destination.
+            if (current.id == t) {
+                break; // found the destination.
+            }
 
             IntPair p = toIntPair(current.id, W);
             for (Dir dir : ORDER) {
                 int nx = p.x() + dir.dx;
                 int ny = p.y() + dir.dy;
-                if (!inBounds(nx, ny, W, H) || !passable[nx][ny]) continue;
+                if (!inBounds(nx, ny, W, H) || !passable[nx][ny]) {
+                    continue;
+                }
                 int vid =  toId(nx, ny, W);
-                if (visited[vid]) continue;
+                if (visited[vid]) {
+                    continue;
+                }
 
                 double step = 1.0; // base cost
                 if (current.dir != null && dir != current.dir) {
@@ -107,25 +115,25 @@ public class AStar2D {
 
     }
 
-    private static int toId (int x, int y, int W) {
+    private static int toId(int x, int y, int W) {
         return y * W + x;
     }
 
-    private static IntPair toIntPair (int id, int W) {
+    private static IntPair toIntPair(int id, int W) {
         return new IntPair(id % W, id / W);
     }
 
-    private static boolean touchesInterior (int x, int y, Boolean[][] isInterior) {
+    private static boolean touchesInterior(int x, int y, Boolean[][] isInterior) {
         int W = isInterior.length;
         int H = isInterior[0].length;
-        return (x > 0 && isInterior[x-1][y] ||
-                x + 1 < W && isInterior[x + 1][y] ||
-                y > 0 && isInterior[x][y-1] ||
-                y + 1 < H && isInterior[x][y+1]
+        return (x > 0 && isInterior[x - 1][y]
+                || x + 1 < W && isInterior[x + 1][y]
+                || y > 0 && isInterior[x][y - 1]
+                || y + 1 < H && isInterior[x][y + 1]
                 );
     }
 
-    public static boolean inBounds(IntPair p, int W, int H ) {
+    public static boolean inBounds(IntPair p, int W, int H) {
         return inBounds(p.x(), p.y(), W, H);
     }
 
